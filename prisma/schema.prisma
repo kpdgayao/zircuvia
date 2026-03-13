@@ -1,0 +1,224 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  TOURIST
+  ADMIN
+  VERIFIER
+}
+
+enum BusinessCategory {
+  HOTEL
+  RESORT
+  RESTAURANT
+  TOUR
+  ARTISAN
+  TRAVEL_AND_TOURS
+  EVENT_VENUE
+}
+
+enum EcoStatus {
+  NONE
+  PENDING
+  APPROVED
+  REVOKED
+}
+
+enum PayerType {
+  REGULAR_TOURIST
+  PALAWENO
+  STUDENT
+  SENIOR_CITIZEN
+  PWD
+}
+
+enum PaymentStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  FAILED
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  passwordHash       String
+  firstName          String
+  lastName           String
+  role               Role      @default(TOURIST)
+  avatarUrl          String?
+  emailVerified      Boolean   @default(false)
+  mustChangePassword Boolean   @default(false)
+  memberSince        DateTime  @default(now())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  adminAccess     AdminAccess?
+  verifierProfile VerifierProfile?
+  feePayments     FeePayment[]
+  reviews         Review[]
+  savedBusinesses SavedBusiness[]
+}
+
+model AdminAccess {
+  id                    String  @id @default(cuid())
+  userId                String  @unique
+  user                  User    @relation(fields: [userId], references: [id])
+  businessManagement    Boolean @default(false)
+  ecoBusinessProcessing Boolean @default(false)
+  environmentalFees     Boolean @default(false)
+  visitorStats          Boolean @default(false)
+  eventsAndPromos       Boolean @default(false)
+  systemLogs            Boolean @default(false)
+  settings              Boolean @default(false)
+}
+
+model VerifierProfile {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id])
+  assignedLocationId String?
+  assignedLocation   Business? @relation(fields: [assignedLocationId], references: [id])
+  checkIns           CheckIn[]
+}
+
+model Business {
+  id             String           @id @default(cuid())
+  name           String
+  category       BusinessCategory
+  about          String?          @db.VarChar(300)
+  address        String
+  barangay       String?
+  lat            Float?
+  lng            Float?
+  email          String?
+  phone          String?
+  website        String?
+  owner          String?
+  coverPhotoUrl  String?
+  isEcoCertified Boolean          @default(false)
+  ecoStatus      EcoStatus        @default(NONE)
+  isArchived     Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  reviews   Review[]
+  savedBy   SavedBusiness[]
+  verifiers VerifierProfile[]
+  events    Event[]
+  circuitId String?
+  circuit   TourismCircuit? @relation(fields: [circuitId], references: [id])
+
+  @@index([category])
+  @@index([isArchived, category])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  rating     Int
+  text       String?
+  createdAt  DateTime @default(now())
+
+  @@index([businessId])
+}
+
+model SavedBusiness {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, businessId])
+}
+
+model FeePayment {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  referenceId     String        @unique
+  totalPersons    Int
+  totalAmount     Float
+  status          PaymentStatus @default(PENDING)
+  validUntil      DateTime
+  paidAt          DateTime?
+  xenditPaymentId String?
+  xenditStatus    String?
+  createdAt       DateTime      @default(now())
+
+  lines    FeePaymentLine[]
+  checkIns CheckIn[]
+
+  @@index([userId, status])
+}
+
+model FeePaymentLine {
+  id           String     @id @default(cuid())
+  feePaymentId String
+  feePayment   FeePayment @relation(fields: [feePaymentId], references: [id])
+  payerType    PayerType
+  quantity     Int
+  unitPrice    Float
+  lineTotal    Float
+}
+
+model CheckIn {
+  id           String          @id @default(cuid())
+  feePaymentId String
+  feePayment   FeePayment      @relation(fields: [feePaymentId], references: [id])
+  verifierId   String
+  verifier     VerifierProfile @relation(fields: [verifierId], references: [id])
+  totalPersons Int
+  verifiedAt   DateTime        @default(now())
+  checkDate    DateTime        @db.Date @default(now())
+
+  @@unique([feePaymentId, checkDate])
+  @@index([feePaymentId])
+}
+
+model Event {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  startDate     DateTime
+  endDate       DateTime?
+  location      String?
+  coverPhotoUrl String?
+  isPromo       Boolean   @default(false)
+  businessId    String?
+  business      Business? @relation(fields: [businessId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model TourismCircuit {
+  id              String     @id @default(cuid())
+  name            String
+  cluster         String
+  thematicConcept String
+  destinations    Business[]
+}
+
+model SystemLog {
+  id          String   @id @default(cuid())
+  action      String
+  description String
+  userId      String
+  targetType  String?
+  targetId    String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+}
