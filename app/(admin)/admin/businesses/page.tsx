@@ -9,17 +9,9 @@ import { SearchWithHistory } from "@/components/search-with-history";
 import { StatusBadge } from "@/components/status-badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Plus, Pencil } from "lucide-react";
+import { BUSINESS_CATEGORIES, CATEGORY_LABELS } from "@/lib/business-constants";
 
-const CATEGORIES = [
-  { value: "", label: "All Categories" },
-  { value: "HOTEL", label: "Hotel" },
-  { value: "RESORT", label: "Resort" },
-  { value: "RESTAURANT", label: "Restaurant" },
-  { value: "TOUR", label: "Tour" },
-  { value: "ARTISAN", label: "Artisan" },
-  { value: "TRAVEL_AND_TOURS", label: "Travel & Tours" },
-  { value: "EVENT_VENUE", label: "Event Venue" },
-];
+const ALL_CATEGORIES = [{ value: "", label: "All Categories" }, ...BUSINESS_CATEGORIES];
 
 interface BusinessRow extends Record<string, unknown> {
   id: string;
@@ -50,10 +42,8 @@ export default function AdminBusinessesPage() {
       params.set("limit", "10");
       if (searchQuery) params.set("search", searchQuery);
       if (category) params.set("category", category);
-      // For archived tab, we need a special endpoint - we'll use the main one with extra param
-      // The existing GET /api/businesses always filters isArchived:false,
-      // so for archived we need to handle differently
-      // We'll add an "archived" param support by calling a broader search
+      if (sort) params.set("sort", sort);
+      if (tab === "archived") params.set("archived", "true");
       const res = await fetch(`/api/businesses?${params.toString()}`);
       if (res.ok) {
         const json = await res.json();
@@ -64,7 +54,7 @@ export default function AdminBusinessesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, searchQuery, category]);
+  }, [page, searchQuery, category, sort, tab]);
 
   useEffect(() => {
     fetchData();
@@ -78,7 +68,7 @@ export default function AdminBusinessesPage() {
     { key: "name", label: "Name" },
     {
       key: "category", label: "Category",
-      render: (row) => row.category.replace(/_/g, " "),
+      render: (row) => CATEGORY_LABELS[row.category] ?? row.category,
     },
     { key: "address", label: "Address" },
     {
@@ -98,12 +88,6 @@ export default function AdminBusinessesPage() {
       ),
     },
   ];
-
-  // Filter by archived status client-side (since the API only returns non-archived)
-  // For a more complete solution, we'd need an admin-specific businesses endpoint
-  const filtered = tab === "archived"
-    ? data.businesses.filter((b) => b.isArchived)
-    : data.businesses.filter((b) => !b.isArchived);
 
   return (
     <div className="space-y-6">
@@ -138,7 +122,7 @@ export default function AdminBusinessesPage() {
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>
-              {CATEGORIES.map((c) => (
+              {ALL_CATEGORIES.map((c) => (
                 <SelectItem key={c.value} value={c.value || "__all__"}>
                   {c.label}
                 </SelectItem>
@@ -162,7 +146,7 @@ export default function AdminBusinessesPage() {
           ) : (
             <DataTable<BusinessRow>
               columns={columns}
-              data={filtered}
+              data={data.businesses}
               page={page}
               totalPages={data.totalPages}
               onPageChange={setPage}
@@ -172,9 +156,18 @@ export default function AdminBusinessesPage() {
         </TabsContent>
 
         <TabsContent value="archived" className="mt-4">
-          <p className="text-sm text-gray-500 py-8 text-center">
-            Archived businesses can be viewed via the edit page. Use the Archive/Unarchive toggle on individual businesses.
-          </p>
+          {loading ? (
+            <p className="text-sm text-gray-500 py-8 text-center">Loading...</p>
+          ) : (
+            <DataTable<BusinessRow>
+              columns={columns}
+              data={data.businesses}
+              page={page}
+              totalPages={data.totalPages}
+              onPageChange={setPage}
+              emptyMessage="No archived businesses."
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

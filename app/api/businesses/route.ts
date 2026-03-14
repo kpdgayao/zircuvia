@@ -19,10 +19,12 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") ?? undefined;
     const categoryParam = searchParams.get("category") ?? undefined;
     const ecoOnly = searchParams.get("ecoOnly") === "true";
+    const archived = searchParams.get("archived") === "true";
+    const sort = searchParams.get("sort") === "asc" ? "asc" as const : "desc" as const;
 
     // Build where clause
     const where: Prisma.BusinessWhereInput = {
-      isArchived: false,
+      isArchived: archived,
     };
 
     if (ecoOnly) {
@@ -53,7 +55,7 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: sort },
         include: {
           _count: { select: { reviews: true } },
           reviews: {
