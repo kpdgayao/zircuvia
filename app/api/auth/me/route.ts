@@ -18,6 +18,7 @@ export async function GET() {
       role: true,
       avatarUrl: true,
       emailVerified: true,
+      memberSince: true,
     } as const;
 
     if (session.role === "ADMIN") {
