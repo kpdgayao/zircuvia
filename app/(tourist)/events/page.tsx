@@ -23,10 +23,21 @@ interface EventItem {
 export default function EventsPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authed, setAuthed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    async function fetchEvents() {
+    async function checkAuthAndFetch() {
       try {
+        // Auth check — events page requires sign-in
+        const meRes = await fetch("/api/auth/me");
+        const meData = await meRes.json();
+        if (!meData.user) {
+          setAuthed(false);
+          setLoading(false);
+          return;
+        }
+        setAuthed(true);
+
         const res = await fetch("/api/events");
         if (res.ok) {
           const json = await res.json();
@@ -38,8 +49,20 @@ export default function EventsPage() {
         setLoading(false);
       }
     }
-    fetchEvents();
+    checkAuthAndFetch();
   }, []);
+
+  if (authed === false) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <Calendar className="h-12 w-12 text-gray-300 mb-4" />
+        <p className="text-sm text-gray-500">Sign in to view events</p>
+        <Link href="/login" className="text-sm text-[#2E7D32] underline mt-2">
+          Sign In
+        </Link>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
