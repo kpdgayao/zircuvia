@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const session = await requireRole(["TOURIST"]);
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.role !== "TOURIST") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const payments = await prisma.feePayment.findMany({
       where: { userId: session.userId },

@@ -44,7 +44,12 @@ export async function createPaymentInvoice(params: CreatePaymentParams) {
 }
 
 export function verifyWebhookToken(token: string | null): boolean {
-  if (getXenditMode() === "mock") return true;
+  if (getXenditMode() === "mock") {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Mock mode must not be used in production");
+    }
+    return true;
+  }
   return token === process.env.XENDIT_WEBHOOK_TOKEN;
 }
 

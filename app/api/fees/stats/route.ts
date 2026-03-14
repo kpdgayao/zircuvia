@@ -28,9 +28,18 @@ export async function GET(request: NextRequest) {
     };
 
     if (from || to) {
-      dateFilter.paidAt = {};
-      if (from) dateFilter.paidAt.gte = new Date(from);
-      if (to) dateFilter.paidAt.lte = new Date(to);
+      const paidAtFilter: { gte?: Date; lte?: Date } = {};
+      if (from) {
+        const d = new Date(from);
+        if (!isNaN(d.getTime())) paidAtFilter.gte = d;
+      }
+      if (to) {
+        const d = new Date(to);
+        if (!isNaN(d.getTime())) paidAtFilter.lte = d;
+      }
+      if (paidAtFilter.gte || paidAtFilter.lte) {
+        dateFilter.paidAt = paidAtFilter;
+      }
     }
 
     // Total visitors and amount

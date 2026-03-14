@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { feePaymentSchema } from "@/lib/validations";
 import { FEE_PRICES } from "@/lib/fee-constants";
@@ -9,7 +9,13 @@ import { z } from "zod";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireRole(["TOURIST"]);
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.role !== "TOURIST") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     const body = await req.json();
     const { lines } = feePaymentSchema.parse(body);
 

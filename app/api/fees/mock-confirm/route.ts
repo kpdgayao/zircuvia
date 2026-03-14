@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isMockMode } from "@/lib/xendit";
 import { FEE_VALIDITY_DAYS } from "@/lib/fee-constants";
@@ -10,7 +10,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await requireRole(["TOURIST"]);
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.role !== "TOURIST") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     const { referenceId } = await req.json();
 
     if (!referenceId) {
@@ -29,6 +35,11 @@ export async function POST(req: NextRequest) {
         { error: "Payment not found" },
         { status: 404 }
       );
+    }
+
+    // Ownership check — tourist can only confirm their own payments
+    if (payment.userId !== session.userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Already confirmed — idempotent
