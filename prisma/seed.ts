@@ -6,19 +6,21 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Seeding database...");
 
-  // Clear existing data in reverse dependency order
-  await prisma.checkIn.deleteMany();
-  await prisma.feePaymentLine.deleteMany();
-  await prisma.feePayment.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.savedBusiness.deleteMany();
-  await prisma.systemLog.deleteMany();
-  await prisma.event.deleteMany();
-  await prisma.verifierProfile.deleteMany();
-  await prisma.adminAccess.deleteMany();
-  await prisma.business.deleteMany();
-  await prisma.tourismCircuit.deleteMany();
-  await prisma.user.deleteMany();
+  // Clear existing data in reverse dependency order (atomic)
+  await prisma.$transaction([
+    prisma.checkIn.deleteMany(),
+    prisma.feePaymentLine.deleteMany(),
+    prisma.feePayment.deleteMany(),
+    prisma.review.deleteMany(),
+    prisma.savedBusiness.deleteMany(),
+    prisma.systemLog.deleteMany(),
+    prisma.event.deleteMany(),
+    prisma.verifierProfile.deleteMany(),
+    prisma.adminAccess.deleteMany(),
+    prisma.business.deleteMany(),
+    prisma.tourismCircuit.deleteMany(),
+    prisma.user.deleteMany(),
+  ]);
 
   console.log("Cleared existing data.");
 
