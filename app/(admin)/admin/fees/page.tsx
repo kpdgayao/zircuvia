@@ -8,6 +8,8 @@ import { SearchWithHistory } from "@/components/search-with-history";
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { StatusBadge } from "@/components/status-badge";
 import { subDays } from "date-fns";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { PAYER_TYPE_LABELS } from "@/lib/fee-constants";
 import { Users, Receipt, TrendingUp, Download } from "lucide-react";
 
 interface FeeStats {
@@ -26,18 +28,6 @@ interface PaymentRow extends Record<string, unknown> {
   paidAt: string | null;
   createdAt: string;
   user: { firstName: string; lastName: string; email: string };
-}
-
-const PAYER_LABELS: Record<string, string> = {
-  REGULAR_TOURIST: "Regular Tourist",
-  PALAWENO: "Palaweno / Palawan Resident",
-  STUDENT: "Student",
-  SENIOR_CITIZEN: "Senior Citizen",
-  PWD: "Person with Disability",
-};
-
-function formatCurrency(amount: number): string {
-  return `₱${amount.toLocaleString("en", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 export default function AdminFeesPage() {
@@ -127,12 +117,7 @@ export default function AdminFeesPage() {
     {
       key: "createdAt",
       label: "Date",
-      render: (row) =>
-        new Date(row.createdAt).toLocaleDateString("en", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
+      render: (row) => formatDate(row.createdAt),
     },
   ];
 
@@ -205,7 +190,7 @@ export default function AdminFeesPage() {
               {stats.breakdown.map((b) => (
                 <div key={b.payerType} className="bg-gray-50 rounded-lg p-3">
                   <p className="text-xs text-gray-500 truncate">
-                    {PAYER_LABELS[b.payerType] ?? b.payerType}
+                    {PAYER_TYPE_LABELS[b.payerType] ?? b.payerType}
                   </p>
                   <p className="text-lg font-bold mt-1">{b.persons.toLocaleString()}</p>
                   <p className="text-xs text-gray-500">{formatCurrency(b.amount)}</p>

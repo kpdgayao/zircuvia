@@ -7,6 +7,7 @@ import { DataTable, type Column } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Leaf, CheckCircle, XCircle } from "lucide-react";
+import { CATEGORY_LABELS } from "@/lib/business-constants";
 
 interface BusinessRow extends Record<string, unknown> {
   id: string;
@@ -72,7 +73,7 @@ export default function EcoBusinessPage() {
 
   const pendingColumns: Column<BusinessRow>[] = [
     { key: "name", label: "Business Name" },
-    { key: "category", label: "Category", render: (row) => row.category.replace(/_/g, " ") },
+    { key: "category", label: "Category", render: (row) => CATEGORY_LABELS[row.category] ?? row.category },
     { key: "address", label: "Address" },
     {
       key: "actions", label: "Actions",
@@ -95,7 +96,7 @@ export default function EcoBusinessPage() {
 
   const approvedColumns: Column<BusinessRow>[] = [
     { key: "name", label: "Business Name" },
-    { key: "category", label: "Category", render: (row) => row.category.replace(/_/g, " ") },
+    { key: "category", label: "Category", render: (row) => CATEGORY_LABELS[row.category] ?? row.category },
     { key: "address", label: "Address" },
     {
       key: "ecoStatus", label: "Status",

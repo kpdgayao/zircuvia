@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseDateRangeFilter } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 
 // GET /api/export/visits — CSV export of visitor data
@@ -19,31 +20,17 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
+    const paidAtFilter = parseDateRangeFilter(searchParams.get("from"), searchParams.get("to"));
 
     const where: Prisma.FeePaymentWhereInput = {
       status: { in: ["ACTIVE", "EXPIRED"] },
+      ...(paidAtFilter && { paidAt: paidAtFilter }),
     };
-
-    if (from || to) {
-      const paidAtFilter: { gte?: Date; lte?: Date } = {};
-      if (from) {
-        const d = new Date(from);
-        if (!isNaN(d.getTime())) paidAtFilter.gte = d;
-      }
-      if (to) {
-        const d = new Date(to);
-        if (!isNaN(d.getTime())) paidAtFilter.lte = d;
-      }
-      if (paidAtFilter.gte || paidAtFilter.lte) {
-        where.paidAt = paidAtFilter;
-      }
-    }
 
     const payments = await prisma.feePayment.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      take: 10000,
       include: {
         user: { select: { firstName: true, lastName: true, email: true } },
         lines: true,

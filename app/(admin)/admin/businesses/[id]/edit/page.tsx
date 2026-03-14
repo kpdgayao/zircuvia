@@ -11,16 +11,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ArrowLeft, Archive } from "lucide-react";
 import Link from "next/link";
-
-const CATEGORIES = [
-  { value: "HOTEL", label: "Hotel" },
-  { value: "RESORT", label: "Resort" },
-  { value: "RESTAURANT", label: "Restaurant" },
-  { value: "TOUR", label: "Tour" },
-  { value: "ARTISAN", label: "Artisan" },
-  { value: "TRAVEL_AND_TOURS", label: "Travel & Tours" },
-  { value: "EVENT_VENUE", label: "Event Venue" },
-];
+import { BUSINESS_CATEGORIES } from "@/lib/business-constants";
 
 export default function EditBusinessPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -173,7 +164,7 @@ export default function EditBusinessPage({ params }: { params: Promise<{ id: str
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((c) => (
+                  {BUSINESS_CATEGORIES.map((c) => (
                     <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                   ))}
                 </SelectContent>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseDateRangeFilter } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 
 // GET /api/visits/stats — visitor stats with payer breakdown, visits by category, top 5 places
@@ -19,63 +20,38 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
+    const paidAtFilter = parseDateRangeFilter(searchParams.get("from"), searchParams.get("to"));
 
-    // Date filter for confirmed payments
     const dateFilter: Prisma.FeePaymentWhereInput = {
       status: { in: ["ACTIVE", "EXPIRED"] },
+      ...(paidAtFilter && { paidAt: paidAtFilter }),
     };
 
-    if (from || to) {
-      const paidAtFilter: { gte?: Date; lte?: Date } = {};
-      if (from) {
-        const d = new Date(from);
-        if (!isNaN(d.getTime())) paidAtFilter.gte = d;
-      }
-      if (to) {
-        const d = new Date(to);
-        if (!isNaN(d.getTime())) paidAtFilter.lte = d;
-      }
-      if (paidAtFilter.gte || paidAtFilter.lte) {
-        dateFilter.paidAt = paidAtFilter;
-      }
-    }
+    // Run independent queries in parallel
+    const [aggregates, breakdownRaw, topPlacesRaw] = await Promise.all([
+      prisma.feePayment.aggregate({
+        where: dateFilter,
+        _sum: { totalPersons: true, totalAmount: true },
+        _count: true,
+      }),
+      prisma.feePaymentLine.groupBy({
+        by: ["payerType"],
+        where: { feePayment: dateFilter },
+        _sum: { quantity: true, lineTotal: true },
+      }),
+      prisma.checkIn.groupBy({
+        by: ["verifierId"],
+        _sum: { totalPersons: true },
+        orderBy: { _sum: { totalPersons: "desc" } },
+        take: 5,
+      }),
+    ]);
 
-    // Aggregates
-    const aggregates = await prisma.feePayment.aggregate({
-      where: dateFilter,
-      _sum: { totalPersons: true, totalAmount: true },
-      _count: true,
-    });
-
-    // Breakdown by payer type
-    const lines = await prisma.feePaymentLine.findMany({
-      where: { feePayment: dateFilter },
-      select: { payerType: true, quantity: true, lineTotal: true },
-    });
-
-    const breakdownMap: Record<string, { persons: number; amount: number }> = {};
-    for (const line of lines) {
-      if (!breakdownMap[line.payerType]) {
-        breakdownMap[line.payerType] = { persons: 0, amount: 0 };
-      }
-      breakdownMap[line.payerType].persons += line.quantity;
-      breakdownMap[line.payerType].amount += line.lineTotal;
-    }
-
-    const breakdown = Object.entries(breakdownMap).map(([payerType, data]) => ({
-      payerType,
-      ...data,
+    const breakdown = breakdownRaw.map((row) => ({
+      payerType: row.payerType,
+      persons: row._sum.quantity ?? 0,
+      amount: row._sum.lineTotal ?? 0,
     }));
-
-    // Top 5 places by check-in count
-    const topPlacesRaw = await prisma.checkIn.groupBy({
-      by: ["verifierId"],
-      _sum: { totalPersons: true },
-      orderBy: { _sum: { totalPersons: "desc" } },
-      take: 5,
-    });
 
     const verifierIds = topPlacesRaw.map((v) => v.verifierId);
     const verifiers =

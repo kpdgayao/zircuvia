@@ -8,6 +8,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { subDays } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
+import { PAYER_TYPE_LABELS } from "@/lib/fee-constants";
+import { CATEGORY_LABELS } from "@/lib/business-constants";
 import { Users, Receipt, MapPin, Download } from "lucide-react";
 
 interface VisitStats {
@@ -17,18 +20,6 @@ interface VisitStats {
   breakdown: { payerType: string; persons: number; amount: number }[];
   topPlaces: { name: string; category: string; visitors: number }[];
   visitsByCategory: { category: string; visitors: number }[];
-}
-
-const PAYER_LABELS: Record<string, string> = {
-  REGULAR_TOURIST: "Regular Tourist",
-  PALAWENO: "Palaweno / Palawan Resident",
-  STUDENT: "Student",
-  SENIOR_CITIZEN: "Senior Citizen",
-  PWD: "Person with Disability",
-};
-
-function formatCurrency(amount: number): string {
-  return `₱${amount.toLocaleString("en", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 export default function AdminVisitsPage() {
@@ -142,7 +133,7 @@ export default function AdminVisitsPage() {
                     stats.breakdown.map((row) => (
                       <TableRow key={row.payerType}>
                         <TableCell className="font-medium">
-                          {PAYER_LABELS[row.payerType] ?? row.payerType}
+                          {PAYER_TYPE_LABELS[row.payerType] ?? row.payerType}
                         </TableCell>
                         <TableCell className="text-right">{row.persons.toLocaleString()}</TableCell>
                         <TableCell className="text-right">{formatCurrency(row.amount)}</TableCell>
@@ -180,7 +171,7 @@ export default function AdminVisitsPage() {
                     stats.topPlaces.map((place, idx) => (
                       <TableRow key={idx}>
                         <TableCell className="font-medium">{place.name}</TableCell>
-                        <TableCell>{place.category.replace(/_/g, " ")}</TableCell>
+                        <TableCell>{CATEGORY_LABELS[place.category] ?? place.category}</TableCell>
                         <TableCell className="text-right">{place.visitors.toLocaleString()}</TableCell>
                       </TableRow>
                     ))

@@ -10,16 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-
-const CATEGORIES = [
-  { value: "HOTEL", label: "Hotel" },
-  { value: "RESORT", label: "Resort" },
-  { value: "RESTAURANT", label: "Restaurant" },
-  { value: "TOUR", label: "Tour" },
-  { value: "ARTISAN", label: "Artisan" },
-  { value: "TRAVEL_AND_TOURS", label: "Travel & Tours" },
-  { value: "EVENT_VENUE", label: "Event Venue" },
-];
+import { BUSINESS_CATEGORIES } from "@/lib/business-constants";
 
 export default function NewBusinessPage() {
   const router = useRouter();
@@ -112,7 +103,7 @@ export default function NewBusinessPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((c) => (
+                  {BUSINESS_CATEGORIES.map((c) => (
                     <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                   ))}
                 </SelectContent>

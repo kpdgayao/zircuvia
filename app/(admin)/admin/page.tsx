@@ -13,45 +13,38 @@ export default async function AdminDashboardPage() {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") redirect("/admin-login");
 
-  // Total visitors and amount from confirmed payments
-  const aggregates = await prisma.feePayment.aggregate({
-    where: { status: { in: ["ACTIVE", "EXPIRED"] } },
-    _sum: { totalPersons: true, totalAmount: true },
-    _count: true,
-  });
+  // Run independent queries in parallel
+  const statusFilter = { status: { in: ["ACTIVE" as const, "EXPIRED" as const] } };
 
-  const totalVisitors = aggregates._sum.totalPersons ?? 0;
-  const totalAmount = aggregates._sum.totalAmount ?? 0;
-  const totalPayments = aggregates._count;
+  const [aggregates, breakdownRaw, topPlacesRaw] = await Promise.all([
+    prisma.feePayment.aggregate({
+      where: statusFilter,
+      _sum: { totalPersons: true, totalAmount: true },
+      _count: true,
+    }),
+    prisma.feePaymentLine.groupBy({
+      by: ["payerType"],
+      where: { feePayment: statusFilter },
+      _sum: { quantity: true, lineTotal: true },
+    }),
+    prisma.checkIn.groupBy({
+      by: ["verifierId"],
+      _sum: { totalPersons: true },
+      orderBy: { _sum: { totalPersons: "desc" } },
+      take: 5,
+    }),
+  ]);
 
-  // Breakdown by payer type
-  const lines = await prisma.feePaymentLine.findMany({
-    where: { feePayment: { status: { in: ["ACTIVE", "EXPIRED"] } } },
-    select: { payerType: true, quantity: true, lineTotal: true },
-  });
+  const totalVisitors = aggregates._sum?.totalPersons ?? 0;
+  const totalAmount = aggregates._sum?.totalAmount ?? 0;
+  const totalPayments = aggregates._count ?? 0;
 
-  const breakdownMap: Record<string, { persons: number; amount: number }> = {};
-  for (const line of lines) {
-    if (!breakdownMap[line.payerType]) {
-      breakdownMap[line.payerType] = { persons: 0, amount: 0 };
-    }
-    breakdownMap[line.payerType].persons += line.quantity;
-    breakdownMap[line.payerType].amount += line.lineTotal;
-  }
-
-  const breakdown = Object.entries(breakdownMap).map(([payerType, data]) => ({
-    payerType,
-    label: PAYER_TYPE_LABELS[payerType] ?? payerType,
-    ...data,
+  const breakdown = breakdownRaw.map((row) => ({
+    payerType: row.payerType,
+    label: PAYER_TYPE_LABELS[row.payerType] ?? row.payerType,
+    persons: row._sum?.quantity ?? 0,
+    amount: row._sum?.lineTotal ?? 0,
   }));
-
-  // Top 5 places by check-in count
-  const topPlacesRaw = await prisma.checkIn.groupBy({
-    by: ["verifierId"],
-    _sum: { totalPersons: true },
-    orderBy: { _sum: { totalPersons: "desc" } },
-    take: 5,
-  });
 
   const verifierIds = topPlacesRaw.map((v) => v.verifierId);
   const verifiers = verifierIds.length > 0
