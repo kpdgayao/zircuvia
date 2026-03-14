@@ -7,6 +7,7 @@ import { StarRating } from "@/components/star-rating";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getSession } from "@/lib/auth";
 import { formatDate } from "@/lib/utils";
+import { CATEGORY_LABELS } from "@/lib/business-constants";
 import {
   MapPin,
   Phone,
@@ -51,16 +52,6 @@ interface BusinessDetail {
   avgRating: number;
   reviewCount: number;
 }
-
-const CATEGORY_LABELS: Record<string, string> = {
-  HOTEL: "Hotel",
-  RESORT: "Resort",
-  RESTAURANT: "Restaurant",
-  TOUR: "Tour",
-  ARTISAN: "Artisan",
-  TRAVEL_AND_TOURS: "Travel & Tours",
-  EVENT_VENUE: "Event Venue",
-};
 
 async function getBusiness(id: string): Promise<BusinessDetail | null> {
   try {

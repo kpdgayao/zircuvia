@@ -27,16 +27,12 @@ export function BusinessActions({
 
     setLoading(true);
     try {
-      if (saved) {
-        const res = await fetch(`/api/businesses/${businessId}/save`, {
-          method: "DELETE",
-        });
-        if (res.ok) setSaved(false);
-      } else {
-        const res = await fetch(`/api/businesses/${businessId}/save`, {
-          method: "POST",
-        });
-        if (res.ok) setSaved(true);
+      const res = await fetch(`/api/saved/${businessId}`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSaved(data.saved);
       }
     } catch (err) {
       console.error("Save error:", err);

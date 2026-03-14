@@ -23,6 +23,7 @@ export async function GET() {
         startDate: { gte: new Date() },
       },
       orderBy: { startDate: "asc" },
+      take: 50,
       include: {
         business: {
           select: { id: true, name: true },

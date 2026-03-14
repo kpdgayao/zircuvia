@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { parseDateRangeFilter } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
@@ -19,60 +20,31 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
+    const paidAtFilter = parseDateRangeFilter(searchParams.get("from"), searchParams.get("to"));
 
-    // Build date filter for confirmed payments (paidAt)
     const dateFilter: Prisma.FeePaymentWhereInput = {
       status: { in: ["ACTIVE", "EXPIRED"] },
+      ...(paidAtFilter && { paidAt: paidAtFilter }),
     };
 
-    if (from || to) {
-      const paidAtFilter: { gte?: Date; lte?: Date } = {};
-      if (from) {
-        const d = new Date(from);
-        if (!isNaN(d.getTime())) paidAtFilter.gte = d;
-      }
-      if (to) {
-        const d = new Date(to);
-        if (!isNaN(d.getTime())) paidAtFilter.lte = d;
-      }
-      if (paidAtFilter.gte || paidAtFilter.lte) {
-        dateFilter.paidAt = paidAtFilter;
-      }
-    }
+    // Total visitors and amount + breakdown by payer type in parallel
+    const [aggregates, groupedLines] = await Promise.all([
+      prisma.feePayment.aggregate({
+        where: dateFilter,
+        _sum: { totalPersons: true, totalAmount: true },
+        _count: true,
+      }),
+      prisma.feePaymentLine.groupBy({
+        by: ["payerType"],
+        where: { feePayment: dateFilter },
+        _sum: { quantity: true, lineTotal: true },
+      }),
+    ]);
 
-    // Total visitors and amount
-    const aggregates = await prisma.feePayment.aggregate({
-      where: dateFilter,
-      _sum: { totalPersons: true, totalAmount: true },
-      _count: true,
-    });
-
-    // Breakdown by payer type
-    const lines = await prisma.feePaymentLine.findMany({
-      where: {
-        feePayment: dateFilter,
-      },
-      select: {
-        payerType: true,
-        quantity: true,
-        lineTotal: true,
-      },
-    });
-
-    const breakdownMap: Record<string, { persons: number; amount: number }> = {};
-    for (const line of lines) {
-      if (!breakdownMap[line.payerType]) {
-        breakdownMap[line.payerType] = { persons: 0, amount: 0 };
-      }
-      breakdownMap[line.payerType].persons += line.quantity;
-      breakdownMap[line.payerType].amount += line.lineTotal;
-    }
-
-    const breakdown = Object.entries(breakdownMap).map(([payerType, data]) => ({
-      payerType,
-      ...data,
+    const breakdown = groupedLines.map((g) => ({
+      payerType: g.payerType,
+      persons: g._sum.quantity ?? 0,
+      amount: g._sum.lineTotal ?? 0,
     }));
 
     return NextResponse.json({

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { createSystemLog } from "@/lib/system-log";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { DEFAULT_TEMP_PASSWORD } from "@/lib/business-constants";
 
 const createVerifierSchema = z.object({
   firstName: z.string().min(1),
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const passwordHash = await bcrypt.hash("Welcome2026!", 12);
+    const passwordHash = await bcrypt.hash(DEFAULT_TEMP_PASSWORD, 12);
 
     const user = await prisma.user.create({
       data: {
