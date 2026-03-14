@@ -42,24 +42,33 @@ export default async function HomePage() {
       <OnboardingGuard />
 
       {session ? (
-        /* ── Signed-in state ── */
+        /* Signed-in state */
         <div className="space-y-6">
-          <div className="pt-2">
-            <h1 className="text-xl font-bold text-gray-900">
-              Welcome Back, {session.firstName}!
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Puerto Princesa City — Explore Sustainability. Support Local.
-            </p>
+          {/* Hero greeting */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2E7D32] to-[#1B5E20] px-5 py-6 text-white shadow-lg">
+            <div className="relative z-10">
+              <h1 className="text-xl font-bold">
+                Welcome Back, {session.firstName}!
+              </h1>
+              <p className="text-sm text-green-100 mt-1">
+                Puerto Princesa City — Explore Sustainability. Support Local.
+              </p>
+            </div>
+            {/* Decorative elements */}
+            <svg className="absolute right-0 top-0 h-full w-32 opacity-10" viewBox="0 0 100 100" fill="none">
+              <circle cx="80" cy="20" r="40" fill="white" />
+              <circle cx="60" cy="70" r="25" fill="white" />
+              <circle cx="90" cy="90" r="15" fill="white" />
+            </svg>
           </div>
 
           <Link
             href="/fees"
-            className="flex items-center justify-between bg-[#2E7D32] text-white rounded-xl px-5 py-4 shadow hover:bg-[#1B5E20] transition"
+            className="flex items-center justify-between bg-white border border-green-200 rounded-xl px-5 py-4 shadow-sm hover:shadow-md hover:border-green-300 transition"
           >
             <div>
-              <p className="font-semibold">Check Fee Payments</p>
-              <p className="text-xs text-green-100 mt-0.5">
+              <p className="font-semibold text-gray-900">Check Fee Payments</p>
+              <p className="text-xs text-gray-500 mt-0.5">
                 View and manage your environmental fees
               </p>
             </div>
@@ -103,24 +112,34 @@ export default async function HomePage() {
           )}
         </div>
       ) : (
-        /* ── Signed-out state ── */
+        /* Signed-out state */
         <div className="space-y-6">
-          <div className="pt-4 text-center space-y-2">
-            <h1 className="text-2xl font-bold text-gray-900 leading-tight">
-              Puerto Princesa City
-            </h1>
-            <p className="text-gray-500 text-sm">
-              Explore Sustainability. Support Local.
-            </p>
+          {/* Hero banner */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2E7D32] via-[#388E3C] to-[#1B5E20] px-5 py-8 text-white shadow-lg">
+            <div className="relative z-10 text-center space-y-2">
+              <h1 className="text-2xl font-bold leading-tight">
+                Puerto Princesa City
+              </h1>
+              <p className="text-sm text-green-100">
+                Explore Sustainability. Support Local.
+              </p>
+            </div>
+            {/* Decorative background */}
+            <svg className="absolute inset-0 w-full h-full opacity-[0.07]" viewBox="0 0 200 100" fill="none">
+              <path d="M0 80 Q50 50 100 70 Q150 90 200 60 L200 100 L0 100 Z" fill="white" />
+              <circle cx="30" cy="25" r="20" fill="white" />
+              <circle cx="170" cy="20" r="15" fill="white" />
+              <circle cx="100" cy="15" r="10" fill="white" />
+            </svg>
           </div>
 
           <Link
             href="/login"
-            className="flex items-center justify-between bg-[#2E7D32] text-white rounded-xl px-5 py-4 shadow hover:bg-[#1B5E20] transition"
+            className="flex items-center justify-between bg-white border border-green-200 rounded-xl px-5 py-4 shadow-sm hover:shadow-md hover:border-green-300 transition"
           >
             <div>
-              <p className="font-semibold">Pay Environmental Fee</p>
-              <p className="text-xs text-green-100 mt-0.5">
+              <p className="font-semibold text-gray-900">Pay Environmental Fee</p>
+              <p className="text-xs text-gray-500 mt-0.5">
                 Sign in to pay your eco-tourism fee
               </p>
             </div>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getSession } from "@/lib/auth";
 import { BottomNav } from "@/components/bottom-nav";
+import { ZircuviaLogo } from "@/components/illustrations";
 
 export default async function TouristLayout({
   children,
@@ -16,7 +17,8 @@ export default async function TouristLayout({
       {/* Top header */}
       <header className="sticky top-0 z-30 bg-white border-b shadow-sm">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-1">
+          <Link href="/" className="flex items-center gap-1.5">
+            <ZircuviaLogo className="w-7 h-7" />
             <span className="font-bold text-lg text-[#2E7D32]">ZircuVia</span>
           </Link>
 

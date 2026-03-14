@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { OTPInput } from "@/components/otp-input";
+import { ZircuviaLogo } from "@/components/illustrations";
 
 function VerifyOtpContent() {
   const router = useRouter();
@@ -51,8 +52,9 @@ function VerifyOtpContent() {
   return (
     <Card className="w-full max-w-md shadow-lg">
       <CardHeader className="text-center pb-2">
-        <div className="text-3xl font-bold mb-1" style={{ color: "#2E7D32" }}>
-          ZircuVia
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <ZircuviaLogo className="w-9 h-9" />
+          <span className="text-3xl font-bold" style={{ color: "#2E7D32" }}>ZircuVia</span>
         </div>
         <p className="text-sm text-muted-foreground">
           Enter the 6-digit code sent to your email

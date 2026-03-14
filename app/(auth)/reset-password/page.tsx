@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { OTPInput } from "@/components/otp-input";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { ZircuviaLogo } from "@/components/illustrations";
 
 interface PasswordRules {
   minLength: boolean;
@@ -141,8 +142,9 @@ function ResetPasswordContent() {
   return (
     <Card className="w-full max-w-md shadow-lg">
       <CardHeader className="text-center pb-2">
-        <div className="text-3xl font-bold mb-1" style={{ color: "#2E7D32" }}>
-          ZircuVia
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <ZircuviaLogo className="w-9 h-9" />
+          <span className="text-3xl font-bold" style={{ color: "#2E7D32" }}>ZircuVia</span>
         </div>
         <p className="text-sm text-muted-foreground">
           {step === 1 && "Reset your password"}

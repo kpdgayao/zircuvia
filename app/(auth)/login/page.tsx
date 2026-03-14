@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ZircuviaLogo } from "@/components/illustrations";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,11 +40,9 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-md shadow-lg">
       <CardHeader className="text-center pb-2">
-        <div
-          className="text-3xl font-bold mb-1"
-          style={{ color: "#2E7D32" }}
-        >
-          ZircuVia
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <ZircuviaLogo className="w-9 h-9" />
+          <span className="text-3xl font-bold" style={{ color: "#2E7D32" }}>ZircuVia</span>
         </div>
         <p className="text-sm text-muted-foreground">Sign in to your account</p>
       </CardHeader>

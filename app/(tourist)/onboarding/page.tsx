@@ -1,12 +1,17 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, ChevronLeft, MapPin, CreditCard, Bookmark } from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  DiscoverIllustration,
+  PaymentIllustration,
+  SaveIllustration,
+} from "@/components/illustrations";
 
 interface Slide {
-  icon: React.ReactNode;
+  illustration: React.ReactNode;
   title: string;
   description: string;
   bg: string;
@@ -14,21 +19,21 @@ interface Slide {
 
 const SLIDES: Slide[] = [
   {
-    icon: <MapPin className="w-16 h-16 text-[#2E7D32]" />,
+    illustration: <DiscoverIllustration className="w-56 h-56" />,
     title: "Discover Puerto Princesa",
     description:
       "Explore the best eco-certified hotels, restaurants, tours, and local artisans that Puerto Princesa City has to offer.",
     bg: "from-green-50 to-white",
   },
   {
-    icon: <CreditCard className="w-16 h-16 text-[#2E7D32]" />,
+    illustration: <PaymentIllustration className="w-56 h-56" />,
     title: "Pay Environmental Fees Easily",
     description:
       "Pay your environmental fee online in seconds. Your contribution helps preserve the natural beauty of Palawan.",
     bg: "from-emerald-50 to-white",
   },
   {
-    icon: <Bookmark className="w-16 h-16 text-[#2E7D32]" />,
+    illustration: <SaveIllustration className="w-56 h-56" />,
     title: "Save Your Favorite Places",
     description:
       "Bookmark the spots you love so you can find them again quickly. Build your own travel itinerary.",
@@ -78,8 +83,8 @@ export default function OnboardingPage() {
       </div>
 
       {/* Slide content */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-8 max-w-sm w-full text-center">
-        <div className="p-6 bg-white rounded-full shadow-sm">{slide.icon}</div>
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 max-w-sm w-full text-center">
+        <div className="drop-shadow-md">{slide.illustration}</div>
         <div className="space-y-3">
           <h1 className="text-2xl font-bold text-gray-900">{slide.title}</h1>
           <p className="text-gray-500 leading-relaxed">{slide.description}</p>
