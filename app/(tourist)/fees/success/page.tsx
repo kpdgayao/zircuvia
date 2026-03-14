@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ interface PaymentInfo {
   validUntil: string;
 }
 
-export default function SuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const referenceId = searchParams.get("ref");
@@ -131,5 +131,13 @@ export default function SuccessPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div className="text-center text-sm text-gray-500 py-8">Loading...</div>}>
+      <SuccessContent />
+    </Suspense>
   );
 }

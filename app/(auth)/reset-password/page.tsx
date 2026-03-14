@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -41,7 +41,7 @@ function RuleItem({ ok, label }: { ok: boolean; label: string }) {
   );
 }
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const forced = searchParams.get("forced") === "true";
@@ -257,5 +257,13 @@ export default function ResetPasswordPage() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="text-center text-sm text-gray-500 py-8">Loading...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
