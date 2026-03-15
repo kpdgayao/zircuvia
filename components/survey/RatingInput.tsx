@@ -15,7 +15,7 @@ export function RatingInput({ value, onChange, max = 5, labels }: RatingInputPro
       <div className="flex gap-2 justify-center">
         {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
           <button key={n} type="button" onClick={() => onChange(n)}
-            className={cn("w-10 h-10 rounded-lg text-sm font-medium transition-all",
+            className={cn("w-11 h-11 rounded-lg text-sm font-medium transition-all",
               value === n ? "bg-[#2E7D32] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             )}>
             {n}

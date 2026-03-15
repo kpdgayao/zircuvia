@@ -13,7 +13,7 @@ export function NpsInput({ value, onChange }: NpsInputProps) {
       <div className="flex gap-1 justify-center flex-wrap">
         {Array.from({ length: 11 }, (_, i) => i).map((n) => (
           <button key={n} type="button" onClick={() => onChange(n)}
-            className={cn("w-9 h-9 rounded-lg text-xs font-medium transition-all",
+            className={cn("w-10 h-10 rounded-lg text-xs font-medium transition-all",
               value === n ? "bg-[#2E7D32] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             )}>
             {n}

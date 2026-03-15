@@ -29,7 +29,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { sessionSurveyReady, openSessionSurvey } = useSurveyContext();
+  const { openSessionSurvey } = useSurveyContext();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -133,23 +133,21 @@ export default function ProfilePage() {
       </Card>
 
       {/* Give Feedback */}
-      {sessionSurveyReady && (
-        <Card className="border-[#2E7D32]/30 bg-green-50/50">
-          <CardContent className="p-0">
-            <button onClick={openSessionSurvey}
-              className="flex items-center justify-between px-4 py-3 hover:bg-green-50 transition w-full text-left">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-4 h-4 text-[#2E7D32]" />
-                <div>
-                  <span className="text-sm font-medium text-[#2E7D32]">Give Feedback</span>
-                  <p className="text-xs text-gray-500">Help us improve ZircuVia</p>
-                </div>
+      <Card className="border-[#2E7D32]/30 bg-green-50/50">
+        <CardContent className="p-0">
+          <button onClick={openSessionSurvey}
+            className="flex items-center justify-between px-4 py-3 hover:bg-green-50 transition w-full text-left">
+            <div className="flex items-center gap-3">
+              <MessageSquare className="w-4 h-4 text-[#2E7D32]" />
+              <div>
+                <span className="text-sm font-medium text-[#2E7D32]">Give Feedback</span>
+                <p className="text-xs text-gray-500">Help us improve ZircuVia</p>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#2E7D32]" />
-            </button>
-          </CardContent>
-        </Card>
-      )}
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#2E7D32]" />
+          </button>
+        </CardContent>
+      </Card>
 
       {/* Sign out */}
       <SignOutButton
