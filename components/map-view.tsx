@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
+import type L from "leaflet";
 
 export interface MapMarker {
   id: string;
@@ -18,145 +18,121 @@ interface MapViewProps {
   className?: string;
 }
 
-interface LeafletModules {
-  MapContainer: any;
-  TileLayer: any;
-  Marker: any;
-  Popup: any;
-  ecoIcon: any;
-}
-
 export function MapView({
   markers,
   center = [9.7489, 118.7354],
   zoom = 13,
   className = "h-full w-full",
 }: MapViewProps) {
-  const [modules, setModules] = useState<LeafletModules | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const initialized = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
 
+  const updateMarkers = useCallback(
+    (map: L.Map, leaflet: typeof L, markerData: MapMarker[]) => {
+      // Clear existing markers
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
+
+      const ecoIcon = new leaflet.Icon({
+        iconUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        iconRetinaUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        shadowUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+        className: "eco-marker",
+      });
+
+      markerData.forEach((m) => {
+        const marker = leaflet
+          .marker([m.lat, m.lng], {
+            icon: m.isEcoCertified ? ecoIcon : undefined,
+          })
+          .addTo(map);
+
+        const popupHtml = `
+          <div class="text-sm">
+            <strong>${m.name}</strong>
+            ${m.isEcoCertified ? '<span style="margin-left:4px;color:#2E7D32;font-size:12px;font-weight:500;">Eco</span>' : ""}
+            <br/>
+            <a href="/listings/${m.id}" style="color:#2E7D32;text-decoration:underline;">View Details</a>
+          </div>
+        `;
+        marker.bindPopup(popupHtml);
+        markersRef.current.push(marker);
+      });
+    },
+    [],
+  );
+
+  // Initialize map
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
+    if (!containerRef.current) return;
+
+    let map: L.Map | null = null;
 
     (async () => {
-      try {
-        const [L, RL] = await Promise.all([
-          import("leaflet"),
-          import("react-leaflet"),
-        ]);
+      const leaflet = await import("leaflet");
+      const L = leaflet.default ?? leaflet;
+      await import("leaflet/dist/leaflet.css");
 
-        await import("leaflet/dist/leaflet.css");
+      // Fix default icon paths
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        iconUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      });
 
-        const leaflet = L.default ?? L;
+      // Guard: container may have unmounted during async import
+      if (!containerRef.current) return;
 
-        delete (leaflet.Icon.Default.prototype as any)._getIconUrl;
-        leaflet.Icon.Default.mergeOptions({
-          iconRetinaUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-          iconUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-          shadowUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-        });
+      map = L.map(containerRef.current).setView(center, zoom);
+      mapRef.current = map;
 
-        const ecoIcon = new leaflet.Icon({
-          iconUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-          iconRetinaUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-          shadowUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
-          className: "eco-marker",
-        });
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
 
-        setModules({
-          MapContainer: RL.MapContainer,
-          TileLayer: RL.TileLayer,
-          Marker: RL.Marker,
-          Popup: RL.Popup,
-          ecoIcon,
-        });
-      } catch (err) {
-        console.error("Failed to load map libraries:", err);
-        setLoadError(
-          err instanceof Error ? err.message : "Failed to load map",
-        );
+      updateMarkers(map, L, markers);
+    })();
+
+    return () => {
+      if (map) {
+        map.remove();
+        map = null;
+        mapRef.current = null;
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update markers when data changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    (async () => {
+      const leaflet = await import("leaflet");
+      const L = leaflet.default ?? leaflet;
+      if (mapRef.current) {
+        updateMarkers(mapRef.current, L, markers);
       }
     })();
-  }, []);
-
-  if (loadError) {
-    return (
-      <div className="h-full w-full bg-gray-100 flex items-center justify-center">
-        <div className="text-center px-4">
-          <p className="text-sm text-gray-600 mb-1">Unable to load the map.</p>
-          <p className="text-xs text-gray-400 mb-2">{loadError}</p>
-          <button
-            className="text-sm text-[#2E7D32] underline"
-            onClick={() => window.location.reload()}
-          >
-            Reload page
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!modules) {
-    return (
-      <div className="h-full w-full bg-gray-100 flex items-center justify-center">
-        <p className="text-sm text-gray-500">Loading map...</p>
-      </div>
-    );
-  }
-
-  const { MapContainer, TileLayer, Marker, Popup, ecoIcon } = modules;
+  }, [markers, updateMarkers]);
 
   return (
     <>
-      <style>{`.eco-marker { filter: hue-rotate(85deg) saturate(1.5); }`}</style>
-      <MapContainer
-        center={center}
-        zoom={zoom}
-        className={className}
-        scrollWheelZoom={true}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
-        {markers.map((m) => (
-          <Marker
-            key={m.id}
-            position={[m.lat, m.lng]}
-            icon={m.isEcoCertified ? ecoIcon : undefined}
-          >
-            <Popup>
-              <div className="text-sm">
-                <strong>{m.name}</strong>
-                {m.isEcoCertified && (
-                  <span className="ml-1 text-[#2E7D32] text-xs font-medium">
-                    Eco
-                  </span>
-                )}
-                <br />
-                <Link
-                  href={`/listings/${m.id}`}
-                  className="text-[#2E7D32] underline"
-                >
-                  View Details
-                </Link>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+      <style>{`
+        .eco-marker { filter: hue-rotate(85deg) saturate(1.5); }
+      `}</style>
+      <div ref={containerRef} className={className} />
     </>
   );
 }
