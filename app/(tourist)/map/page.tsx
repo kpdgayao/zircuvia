@@ -1,19 +1,53 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Component, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { MapMarker } from "@/components/map-view";
 
-const MapView = dynamic(() => import("@/components/map-view").then((m) => m.MapView), {
-  ssr: false,
-  loading: () => (
-    <div className="h-full w-full bg-gray-100 flex items-center justify-center">
-      <p className="text-sm text-gray-500">Loading map...</p>
-    </div>
-  ),
-});
+const MapView = dynamic(
+  () => import("@/components/map-view").then((mod) => ({ default: mod.MapView })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+        <p className="text-sm text-gray-500">Loading map...</p>
+      </div>
+    ),
+  },
+);
+
+class MapErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+          <div className="text-center px-4">
+            <p className="text-sm text-gray-600 mb-2">Unable to load the map.</p>
+            <button
+              className="text-sm text-[#2E7D32] underline"
+              onClick={() => this.setState({ hasError: false })}
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 interface BusinessWithCoords {
   id: string;
@@ -88,7 +122,9 @@ export default function MapPage() {
               {error}
             </div>
           )}
-          <MapView markers={markers} className="h-full w-full" />
+          <MapErrorBoundary>
+            <MapView markers={markers} className="h-full w-full" />
+          </MapErrorBoundary>
         </>
       )}
     </div>
