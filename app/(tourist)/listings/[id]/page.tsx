@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getSession } from "@/lib/auth";
 import { formatDate } from "@/lib/utils";
 import { CATEGORY_LABELS } from "@/lib/business-constants";
+import { prisma } from "@/lib/prisma";
 import {
   MapPin,
   Phone,
@@ -19,49 +20,33 @@ import {
 import { BusinessActions } from "./business-actions";
 import { ReviewForm } from "./review-form";
 
-interface Review {
-  id: string;
-  rating: number;
-  text: string | null;
-  createdAt: string;
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl: string | null;
-  };
-}
-
-interface BusinessDetail {
-  id: string;
-  name: string;
-  category: string;
-  about: string | null;
-  address: string;
-  barangay: string | null;
-  lat: number | null;
-  lng: number | null;
-  email: string | null;
-  phone: string | null;
-  website: string | null;
-  owner: string | null;
-  coverPhotoUrl: string | null;
-  isEcoCertified: boolean;
-  ecoStatus: string;
-  reviews: Review[];
-  avgRating: number;
-  reviewCount: number;
-}
-
-async function getBusiness(id: string): Promise<BusinessDetail | null> {
+async function getBusiness(id: string) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/businesses/${id}`, {
-      next: { revalidate: 30 },
+    const business = await prisma.business.findUnique({
+      where: { id },
+      include: {
+        reviews: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            user: {
+              select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+            },
+          },
+        },
+        _count: { select: { reviews: true } },
+      },
     });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.business ?? null;
+
+    if (!business || business.isArchived) return null;
+
+    const { _count, reviews, ...rest } = business;
+    const reviewCount = _count.reviews;
+    const avgRating =
+      reviewCount > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+        : 0;
+
+    return { ...rest, reviews, avgRating, reviewCount };
   } catch {
     return null;
   }
