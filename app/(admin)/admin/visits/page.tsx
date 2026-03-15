@@ -7,19 +7,21 @@ import { DateRangeFilter } from "@/components/date-range-filter";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { subDays } from "date-fns";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
+import { format, parseISO, subDays } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import { PAYER_TYPE_LABELS } from "@/lib/fee-constants";
-import { CATEGORY_LABELS } from "@/lib/business-constants";
-import { Users, Receipt, MapPin, Download } from "lucide-react";
+import { Users, Receipt, BarChart3, Download } from "lucide-react";
 
 interface VisitStats {
   totalPayments: number;
   totalVisitors: number;
   totalAmount: number;
   breakdown: { payerType: string; persons: number; amount: number }[];
-  topPlaces: { name: string; category: string; visitors: number }[];
-  visitsByCategory: { category: string; visitors: number }[];
+  dailyVolume: { date: string; visitors: number }[];
+  verifierActivity: { name: string; location: string; visitors: number }[];
 }
 
 export default function AdminVisitsPage() {
@@ -108,6 +110,34 @@ export default function AdminVisitsPage() {
             </Card>
           </div>
 
+          {/* Daily Visitor Volume Chart */}
+          {stats.dailyVolume.length > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-[#2E7D32]" />
+                <CardTitle className="text-base">Daily Visitor Volume</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={stats.dailyVolume}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(d: string) => format(parseISO(d), "MMM d")}
+                      fontSize={12}
+                    />
+                    <YAxis allowDecimals={false} fontSize={12} />
+                    <Tooltip
+                      labelFormatter={(d) => format(parseISO(String(d)), "MMM d, yyyy")}
+                      formatter={(value) => [Number(value ?? 0).toLocaleString(), "Visitors"]}
+                    />
+                    <Bar dataKey="visitors" fill="#2E7D32" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Payer Breakdown */}
           <Card>
             <CardHeader>
@@ -145,39 +175,37 @@ export default function AdminVisitsPage() {
             </CardContent>
           </Card>
 
-          {/* Top 5 Places */}
+          {/* Verifier Activity */}
           <Card>
             <CardHeader className="flex flex-row items-center gap-2">
-              <MapPin className="h-5 w-5 text-[#2E7D32]" />
-              <CardTitle className="text-base">Top 5 Places by Check-ins</CardTitle>
+              <Users className="h-5 w-5 text-[#2E7D32]" />
+              <CardTitle className="text-base">Verifier Activity</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Place</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Visitors</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {stats.topPlaces.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center text-gray-500 py-6">
-                        No check-in data
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    stats.topPlaces.map((place, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-medium">{place.name}</TableCell>
-                        <TableCell>{CATEGORY_LABELS[place.category] ?? place.category}</TableCell>
-                        <TableCell className="text-right">{place.visitors.toLocaleString()}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+              {stats.verifierActivity.length === 0 ? (
+                <p className="text-center text-gray-500 py-6">No check-in data</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={stats.verifierActivity} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" allowDecimals={false} fontSize={12} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={120}
+                      fontSize={12}
+                    />
+                    <Tooltip
+                      formatter={(value) => [Number(value ?? 0).toLocaleString(), "Visitors"]}
+                      labelFormatter={(name) => {
+                        const v = stats.verifierActivity.find((a) => a.name === String(name));
+                        return v ? `${name} — ${v.location}` : String(name);
+                      }}
+                    />
+                    <Bar dataKey="visitors" fill="#2E7D32" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </>
