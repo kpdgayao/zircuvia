@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import type L from "leaflet";
 
 export interface MapMarker {
@@ -26,8 +26,10 @@ export function MapView({
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const leafletRef = useRef<typeof L | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const cancelledRef = useRef(false);
+  const [mapReady, setMapReady] = useState(false);
 
   const updateMarkers = useCallback(
     (map: L.Map, leaflet: typeof L, markerData: MapMarker[]) => {
@@ -71,7 +73,7 @@ export function MapView({
     [],
   );
 
-  // Initialize map
+  // Initialize map (once)
   useEffect(() => {
     let cancelled = false;
 
@@ -96,13 +98,15 @@ export function MapView({
 
       const map = Leaflet.map(containerRef.current).setView(center, zoom);
       mapRef.current = map;
+      leafletRef.current = Leaflet;
       cancelledRef.current = false;
 
       Leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
 
-      updateMarkers(map, Leaflet, markers);
+      // Signal that the map is ready so the marker effect can run
+      setMapReady(true);
     })();
 
     return () => {
@@ -116,25 +120,17 @@ export function MapView({
         }
         mapRef.current = null;
       }
+      leafletRef.current = null;
       markersRef.current = [];
+      setMapReady(false);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update markers when data changes
+  // Update markers when map is ready or marker data changes
   useEffect(() => {
-    if (!mapRef.current || cancelledRef.current) return;
-
-    const currentMap = mapRef.current;
-
-    (async () => {
-      const leaflet = await import("leaflet");
-      const Leaflet = leaflet.default ?? leaflet;
-      // Check map still exists after async import
-      if (mapRef.current === currentMap && !cancelledRef.current) {
-        updateMarkers(currentMap, Leaflet, markers);
-      }
-    })();
-  }, [markers, updateMarkers]);
+    if (!mapReady || !mapRef.current || !leafletRef.current || cancelledRef.current) return;
+    updateMarkers(mapRef.current, leafletRef.current, markers);
+  }, [markers, mapReady, updateMarkers]);
 
   return (
     <>
