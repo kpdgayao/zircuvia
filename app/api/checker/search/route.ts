@@ -11,14 +11,25 @@ export async function GET(req: NextRequest) {
     const q = req.nextUrl.searchParams.get("q")?.trim();
     if (!q) return NextResponse.json({ results: [] });
 
-    const results = await prisma.feePayment.findMany({
-      where: {
-        OR: [
-          { referenceId: q },
-          { user: { firstName: { contains: q, mode: "insensitive" } } },
-          { user: { lastName: { contains: q, mode: "insensitive" } } },
+    const words = q.split(/\s+/);
+
+    const orConditions: object[] = [
+      { referenceId: q },
+      { user: { firstName: { contains: q, mode: "insensitive" } } },
+      { user: { lastName: { contains: q, mode: "insensitive" } } },
+    ];
+
+    if (words.length >= 2) {
+      orConditions.push({
+        AND: [
+          { user: { firstName: { contains: words[0], mode: "insensitive" } } },
+          { user: { lastName: { contains: words[words.length - 1], mode: "insensitive" } } },
         ],
-      },
+      });
+    }
+
+    const results = await prisma.feePayment.findMany({
+      where: { OR: orConditions },
       include: {
         user: { select: { firstName: true, lastName: true } },
         lines: true,
