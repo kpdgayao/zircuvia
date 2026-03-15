@@ -69,7 +69,6 @@ export default function VerifyPage() {
   const [verifyResult, setVerifyResult] = useState<{ success: boolean; message: string } | null>(null);
 
   async function handleSearch(q: string) {
-    setQuery(q);
     setLoading(true);
     setSearched(true);
     setSearchError(false);

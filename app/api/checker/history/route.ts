@@ -19,16 +19,9 @@ export async function GET(req: NextRequest) {
     const dayEnd = new Date(date);
     dayEnd.setHours(23, 59, 59, 999);
 
-    const verifierProfile = await prisma.verifierProfile.findUnique({
-      where: { userId: session.userId },
-    });
-    if (!verifierProfile) {
-      return NextResponse.json({ error: "Verifier profile not found" }, { status: 400 });
-    }
-
     const checkIns = await prisma.checkIn.findMany({
       where: {
-        verifierId: verifierProfile.id,
+        verifier: { userId: session.userId },
         verifiedAt: { gte: dayStart, lte: dayEnd },
       },
       include: {

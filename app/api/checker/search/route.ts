@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
 
     const words = q.split(/\s+/);
 
-    const orConditions: object[] = [
+    const orConditions: Prisma.FeePaymentWhereInput[] = [
       { referenceId: q },
       { user: { firstName: { contains: q, mode: "insensitive" } } },
       { user: { lastName: { contains: q, mode: "insensitive" } } },

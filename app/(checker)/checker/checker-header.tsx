@@ -11,13 +11,13 @@ interface CheckerHeaderProps {
   locationName: string | null;
 }
 
+const TABS = [
+  { href: "/checker/verify", label: "Verify" },
+  { href: "/checker/history", label: "History" },
+] as const;
+
 export function CheckerHeader({ firstName, locationName }: CheckerHeaderProps) {
   const pathname = usePathname();
-
-  const tabs = [
-    { href: "/checker/verify", label: "Verify" },
-    { href: "/checker/history", label: "History" },
-  ];
 
   return (
     <header className="w-full max-w-md border-b">
@@ -37,7 +37,7 @@ export function CheckerHeader({ firstName, locationName }: CheckerHeaderProps) {
         </div>
       </div>
       <nav className="flex">
-        {tabs.map((tab) => (
+        {TABS.map((tab) => (
           <Link
             key={tab.href}
             href={tab.href}

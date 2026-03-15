@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { formatDate } from "@/lib/utils";
 
 /** Map raw API errors to user-friendly messages. Uses optional payment status for contextual messaging. */
 export function mapVerifyError(rawError: string, paymentStatus?: string, validUntil?: string): string {
@@ -7,7 +8,7 @@ export function mapVerifyError(rawError: string, paymentStatus?: string, validUn
     return "This payment was already verified today. They can check in again tomorrow.";
   }
   if (rawError === "Payment has expired") {
-    const dateStr = validUntil ? ` on ${new Date(validUntil).toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric" })}` : "";
+    const dateStr = validUntil ? ` on ${formatDate(validUntil)}` : "";
     return `This payment expired${dateStr}. The visitor needs to purchase a new fee.`;
   }
   if (rawError === "Payment is not active") {

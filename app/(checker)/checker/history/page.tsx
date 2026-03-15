@@ -24,12 +24,12 @@ interface HistorySummary {
 }
 
 function formatDateLabel(date: Date): string {
+  if (isToday(date)) return "Today";
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const target = new Date(date);
   target.setHours(0, 0, 0, 0);
-
-  if (target.getTime() === today.getTime()) return "Today";
 
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
