@@ -4,6 +4,8 @@ import { getSession } from "@/lib/auth";
 import { BottomNav } from "@/components/bottom-nav";
 import { ZircuviaLogo } from "@/components/illustrations";
 import { SurveyProvider } from "@/components/survey/SurveyProvider";
+import { Toaster } from "sonner";
+import { OfflineIndicator } from "@/components/offline-indicator";
 
 export default async function TouristLayout({
   children,
@@ -45,6 +47,8 @@ export default async function TouristLayout({
         </div>
       </header>
 
+      <OfflineIndicator />
+
       {/* Main content */}
       <main className="flex-1 max-w-lg mx-auto w-full px-4 py-4 pb-20">
         <SurveyProvider role="TOURIST" variant="sheet">
@@ -53,6 +57,7 @@ export default async function TouristLayout({
       </main>
 
       <BottomNav isSignedIn={isSignedIn} />
+      <Toaster richColors position="top-center" />
     </div>
   );
 }
