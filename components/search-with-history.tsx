@@ -11,6 +11,7 @@ interface SearchWithHistoryProps {
   onSearch: (query: string) => void;
   placeholder?: string;
   storageKey?: string;
+  autoFocus?: boolean;
 }
 
 const MAX_HISTORY = 8;
@@ -21,6 +22,7 @@ export function SearchWithHistory({
   onSearch,
   placeholder = "Search…",
   storageKey = "search_history",
+  autoFocus = false,
 }: SearchWithHistoryProps) {
   const [history, setHistory] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
@@ -34,6 +36,12 @@ export function SearchWithHistory({
       // ignore
     }
   }, [storageKey]);
+
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
 
   const saveToHistory = (query: string) => {
     if (!query.trim()) return;
