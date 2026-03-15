@@ -85,8 +85,12 @@ export default function RegisterPage() {
         toast.error(data.message ?? "Registration failed");
         return;
       }
-      toast.info("Your verification code is 123456");
-      router.push(`/verify-otp?userId=${data.userId}`);
+      if (data.mock && data.code) {
+        toast.info(`Your verification code is ${data.code}`);
+      } else {
+        toast.success("Verification code sent to your email");
+      }
+      router.push(`/verify-otp?userId=${data.userId}&email=${encodeURIComponent(email)}&mock=${data.mock ? "1" : "0"}`);
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
