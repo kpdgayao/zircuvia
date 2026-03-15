@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Bookmark } from "lucide-react";
 import { BusinessCard } from "@/components/business-card";
@@ -28,48 +28,32 @@ export default function SavedPage() {
   const isOnline = useOnlineStatus();
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    async function fetchSaved() {
-      try {
-        const res = await fetch("/api/saved");
-        if (res.status === 401) {
-          setIsSignedIn(false);
-          return;
-        }
-        if (res.ok) {
-          setIsSignedIn(true);
-          const json = await res.json();
-          setBusinesses(json.businesses);
-        } else if (res.status !== 401) {
-          setError(true);
-        }
-      } catch {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchSaved();
-  }, []);
-
-  const retry = () => {
+  const fetchSaved = useCallback(async () => {
     setError(false);
     setLoading(true);
-    fetch("/api/saved")
-      .then(async (res) => {
-        if (res.status === 401) {
-          setIsSignedIn(false);
-        } else if (res.ok) {
-          setIsSignedIn(true);
-          const json = await res.json();
-          setBusinesses(json.businesses);
-        } else {
-          setError(true);
-        }
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
-  };
+    try {
+      const res = await fetch("/api/saved");
+      if (res.status === 401) {
+        setIsSignedIn(false);
+        return;
+      }
+      if (res.ok) {
+        setIsSignedIn(true);
+        const json = await res.json();
+        setBusinesses(json.businesses);
+      } else {
+        setError(true);
+      }
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSaved();
+  }, [fetchSaved]);
 
   if (loading) {
     return (
@@ -100,7 +84,7 @@ export default function SavedPage() {
           </p>
           {isOnline && (
             <button
-              onClick={retry}
+              onClick={fetchSaved}
               className="rounded-lg bg-[#2E7D32] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B5E20] transition"
             >
               Try Again

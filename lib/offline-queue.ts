@@ -14,11 +14,11 @@ export function queueAction(action: Omit<QueuedAction, "id" | "queuedAt">): void
     const pending: QueuedAction[] = JSON.parse(
       localStorage.getItem(QUEUE_KEY) || "[]"
     );
-    if (pending.length >= MAX_QUEUED) return;
-    // Deduplicate: remove existing action with same endpoint+method (prevents toggle thrashing)
+    // Deduplicate first, then check limit (so toggle dedup still works at capacity)
     const deduped = pending.filter(
       (a) => !(a.endpoint === action.endpoint && a.method === action.method)
     );
+    if (deduped.length >= MAX_QUEUED) return;
     deduped.push({
       ...action,
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -41,7 +41,11 @@ export function getPendingCount(): number {
   }
 }
 
+let flushing = false;
+
 export async function flushQueue(): Promise<number> {
+  if (flushing) return 0;
+  flushing = true;
   let synced = 0;
   try {
     const pending: QueuedAction[] = JSON.parse(
@@ -50,7 +54,8 @@ export async function flushQueue(): Promise<number> {
     if (pending.length === 0) return 0;
 
     const remaining: QueuedAction[] = [];
-    for (const action of pending) {
+    for (let i = 0; i < pending.length; i++) {
+      const action = pending[i];
       try {
         const res = await fetch(action.endpoint, {
           method: action.method,
@@ -67,12 +72,16 @@ export async function flushQueue(): Promise<number> {
       } catch {
         remaining.push(action);
       }
-      // Rate limit: 300ms between requests
-      await new Promise((r) => setTimeout(r, 300));
+      // Rate limit: 300ms between requests (skip after last item)
+      if (i < pending.length - 1) {
+        await new Promise((r) => setTimeout(r, 300));
+      }
     }
     localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
   } catch {
     // silent
+  } finally {
+    flushing = false;
   }
   return synced;
 }

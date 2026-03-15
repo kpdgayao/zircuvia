@@ -4,7 +4,7 @@ import { createContext, useContext, useCallback, useEffect } from "react";
 import type { Role } from "@prisma/client";
 import { toast } from "sonner";
 import { useSurveyTrigger } from "@/hooks/use-survey-trigger";
-import { queueAction, flushQueue } from "@/lib/offline-queue";
+import { queueAction } from "@/lib/offline-queue";
 import { MicroSurvey } from "./MicroSurvey";
 import { SessionSurvey } from "./SessionSurvey";
 
@@ -56,14 +56,6 @@ export function SurveyProvider({
     dismiss,
     complete,
   } = useSurveyTrigger(role);
-
-  // Flush any pending offline queue on mount and on reconnect
-  useEffect(() => {
-    flushQueue();
-    const handler = () => { flushQueue(); };
-    window.addEventListener("online", handler);
-    return () => window.removeEventListener("online", handler);
-  }, []);
 
   const handleMicroComplete = useCallback(
     async (
