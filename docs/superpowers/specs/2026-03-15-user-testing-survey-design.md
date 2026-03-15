@@ -1,7 +1,7 @@
 # User Testing Survey System — Design Spec
 
 **Date:** 2026-03-15
-**Status:** Draft
+**Status:** Implemented
 **Purpose:** Collect structured user feedback across all three roles (Tourist, Admin, Verifier) during demo testing to inform the 2nd iteration. Data must be presentable to stakeholders in formal reports.
 
 ---
