@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,12 @@ function VerifyOtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId") ?? "";
+  const userEmail = searchParams.get("email") ?? "";
+  const isMock = searchParams.get("mock") === "1";
 
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    toast.info("Your verification code is 123456");
-  }, []);
+  const [resending, setResending] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,6 +32,10 @@ function VerifyOtpContent() {
         body: JSON.stringify({ userId, code }),
       });
       const data = await res.json();
+      if (res.status === 410) {
+        toast.error("Code expired. Please request a new one.");
+        return;
+      }
       if (!res.ok) {
         toast.error(data.message ?? "Verification failed");
         return;
@@ -45,8 +48,29 @@ function VerifyOtpContent() {
     }
   }
 
-  function handleResend() {
-    toast.info("Your verification code is 123456");
+  async function handleResend() {
+    if (!userEmail) {
+      toast.error("Could not resend code. Please try registering again.");
+      return;
+    }
+    setResending(true);
+    try {
+      const res = await fetch("/api/auth/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail, type: "SIGNUP" }),
+      });
+      const data = await res.json();
+      if (data.mock && data.code) {
+        toast.info(`Your verification code is ${data.code}`);
+      } else {
+        toast.success("A new code has been sent to your email");
+      }
+    } catch {
+      toast.error("Failed to resend code. Please try again.");
+    } finally {
+      setResending(false);
+    }
   }
 
   return (
@@ -57,7 +81,9 @@ function VerifyOtpContent() {
           <span className="text-3xl font-bold" style={{ color: "#2E7D32" }}>ZircuVia</span>
         </div>
         <p className="text-sm text-muted-foreground">
-          Enter the 6-digit code sent to your email
+          {isMock
+            ? "Enter the 6-digit code shown in the notification"
+            : "Enter the 6-digit code sent to your email"}
         </p>
       </CardHeader>
       <CardContent>
@@ -79,10 +105,11 @@ function VerifyOtpContent() {
           <button
             type="button"
             onClick={handleResend}
-            className="font-medium hover:underline"
+            disabled={resending}
+            className="font-medium hover:underline disabled:opacity-50"
             style={{ color: "#2E7D32" }}
           >
-            Resend code
+            {resending ? "Sending…" : "Resend code"}
           </button>
         </p>
       </CardContent>
