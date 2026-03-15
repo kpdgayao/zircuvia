@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "postinstall": "prisma generate",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
     "db:generate": "prisma generate",
