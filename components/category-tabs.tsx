@@ -37,6 +37,16 @@ export function getCategoryEnums(tab: CategoryTab): string[] {
   }
 }
 
+/** Map a raw business category enum (e.g. "HOTEL") to the corresponding tab label */
+export function categoryEnumToTab(category: string): CategoryTab {
+  const upper = category.toUpperCase();
+  for (const tab of TAB_ITEMS) {
+    if (tab === "All") continue;
+    if (getCategoryEnums(tab).includes(upper)) return tab;
+  }
+  return "All";
+}
+
 interface CategoryTabsProps {
   value: CategoryTab;
   onChange: (tab: CategoryTab) => void;

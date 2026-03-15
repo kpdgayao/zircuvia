@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { BusinessCard } from "@/components/business-card";
-import { CategoryTabs, getCategoryEnums, type CategoryTab } from "@/components/category-tabs";
+import { CategoryTabs, getCategoryEnums, categoryEnumToTab, type CategoryTab } from "@/components/category-tabs";
 import { SearchWithHistory } from "@/components/search-with-history";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -29,9 +29,31 @@ interface ApiResponse {
 }
 
 export default function ListingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-4">
+        <h1 className="text-lg font-bold text-gray-900">Business Directory</h1>
+        <div className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+        <div className="grid grid-cols-2 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-40 bg-gray-100 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+    }>
+      <ListingsContent />
+    </Suspense>
+  );
+}
+
+function ListingsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get("category");
+  const initialTab = categoryParam ? categoryEnumToTab(categoryParam) : "All";
+
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<CategoryTab>("All");
+  const [activeTab, setActiveTab] = useState<CategoryTab>(initialTab);
   const [ecoOnly, setEcoOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [data, setData] = useState<ApiResponse | null>(null);
