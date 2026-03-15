@@ -40,7 +40,51 @@ export async function GET(req: NextRequest) {
       checkInCount: checkIns.length,
     };
 
-    return NextResponse.json({ summary, checkIns });
+    // Weekly summary (always current week, independent of browsed date)
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(now);
+    monday.setDate(monday.getDate() - mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+
+    const sunday = new Date(monday);
+    sunday.setDate(sunday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    const weekCheckIns = await prisma.checkIn.findMany({
+      where: {
+        verifier: { userId: session.userId },
+        checkDate: { gte: monday, lte: sunday },
+      },
+      select: { totalPersons: true, checkDate: true },
+    });
+
+    const weekTotalPersons = weekCheckIns.reduce((sum, ci) => sum + ci.totalPersons, 0);
+    const daysElapsed = mondayOffset + 1; // inclusive of today (Mon=1, Tue=2, ..., Sun=7)
+    const dailyAverage = daysElapsed > 0 ? Math.round((weekTotalPersons / daysElapsed) * 10) / 10 : 0;
+
+    // Today's total from week data
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const todayPersons = weekCheckIns
+      .filter((ci) => {
+        const d = new Date(ci.checkDate);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` === todayStr;
+      })
+      .reduce((sum, ci) => sum + ci.totalPersons, 0);
+
+    const todayVsAverage: "above" | "below" | "equal" =
+      todayPersons > dailyAverage ? "above" : todayPersons < dailyAverage ? "below" : "equal";
+
+    const weeklySummary = {
+      totalPersons: weekTotalPersons,
+      checkInCount: weekCheckIns.length,
+      dailyAverage,
+      todayPersons,
+      todayVsAverage,
+    };
+
+    return NextResponse.json({ summary, checkIns, weeklySummary });
   } catch (error) {
     console.error("Checker history error:", error);
     return NextResponse.json({ error: "Failed to load history" }, { status: 500 });
