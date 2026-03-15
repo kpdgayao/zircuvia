@@ -15,7 +15,7 @@ ZircuVia is a Next.js 15 PWA for eco-tourism management in Puerto Princesa with 
 - Shared demo accounts: multiple users per role share a single login
 - Must work offline (PWA)
 - Surveys must never block user workflows
-- Data must be exportable for stakeholder reports (CSV + XLSX)
+- Data must be exportable for stakeholder reports (CSV)
 - All surveys built into the app flow — no external triggers or facilitator controls
 - Fully native implementation using existing stack (no third-party survey tools)
 
@@ -39,6 +39,8 @@ model SurveyResponse {
 }
 ```
 
+**Required change to existing `User` model:** Add `surveyResponses SurveyResponse[]` back-relation field.
+
 ### Field Rationale
 
 - **`responses` as JSON:** Stores an array of `{ questionId, questionText, type, value }`. Flexible enough for different question types without a join table. Performant at this scale (20-50 users).
@@ -58,10 +60,14 @@ All surveys defined in `lib/survey-config.ts` as a static configuration array.
 type SurveyQuestion = {
   id: string
   text: string
-  type: "rating" | "yes_no" | "yes_no_partial" | "multi_select" | "text"
+  type: "rating" | "likert" | "nps" | "yes_no" | "yes_no_partial" | "multi_select" | "text"
   options?: string[]
   required: boolean
   showIf?: "previous_positive" | "previous_negative"
+  // showIf semantics:
+  //   "previous_negative" → show if prior answer is: rating <= 2, "No", or "Partially"
+  //   "previous_positive" → show if prior answer is: rating >= 4, "Yes"
+  //   Rating of 3 is treated as neutral and does NOT trigger either condition
 }
 
 type SurveyConfig = {
@@ -161,25 +167,34 @@ type SurveyConfig = {
 
 ### Survey Logic (`hooks/use-survey-trigger.ts`)
 
-A hook used in layout components:
+A hook that manages survey state and display:
 
 - Tracks completed user actions in `sessionStorage` (e.g., `{ fee_payment: true, business_search: true }`)
 - After a qualifying action, checks cooldown and daily cap
-- Returns `{ activeSurvey: SurveyConfig | null, dismiss: () => void, complete: (responses) => void }`
-- The layout renders `<MicroSurvey>` or `<SessionSurvey>` when `activeSurvey` is non-null
+- Returns `{ activeSurvey: SurveyConfig | null, dismiss: () => void, complete: (responses) => void, markAction: (triggerPoint: string) => void }`
+- Individual pages call `markAction()` after their respective user actions complete
+
+### Layout Integration (`components/survey/SurveyProvider.tsx`)
+
+A client component that wraps each role's layout and renders the active survey:
+
+- Added as a child in `app/(tourist)/layout.tsx`, `app/(admin)/admin/layout.tsx`, and `app/(checker)/checker/layout.tsx`
+- Uses `useSurveyTrigger` hook internally
+- Provides `markAction` to child pages via React context
+- Renders `<MicroSurvey>` (Sheet for tourist, Dialog for admin/checker) or `<SessionSurvey>` based on `activeSurvey`
 
 ### Integration Points
 
 | Action | File | Mechanism |
 |---|---|---|
-| Fee payment success | `app/(tourist)/fees/checkout/` (success callback) | `markAction("fee_payment")` |
+| Fee payment success | `app/(tourist)/fees/success/page.tsx` | `markAction("fee_payment")` on success page load |
 | Submit review | `app/(tourist)/listings/[id]/review-form.tsx` | After successful POST |
 | Search businesses | `app/(tourist)/listings/page.tsx` | After search results render |
 | View business detail | `app/(tourist)/listings/[id]/page.tsx` | After page load with delay |
-| Eco-cert approval | `app/(admin)/eco-business/` action handler | After status change |
+| Eco-cert approval | `app/(admin)/admin/eco-business/page.tsx` | After status change |
 | View analytics | `app/(admin)/admin/page.tsx` | After dashboard data loads |
-| Complete check-in | `app/(checker)/checker/` action handler | After successful check-in |
-| Scan fee reference | `app/(checker)/verify/` action handler | After scan result |
+| Complete check-in | `app/(checker)/checker/verify/page.tsx` | After successful check-in |
+| Scan fee reference | `app/(checker)/checker/verify/page.tsx` | After scan result |
 
 ### Session-End Survey Trigger
 
@@ -210,7 +225,17 @@ A hook used in layout components:
 }
 ```
 
-**Behavior:** Extracts `userId` and `role` from JWT session. Validates body with Zod. Creates `prisma.surveyResponse.create()`. Returns `{ success: true, id }`.
+**Behavior:** Extracts `userId` and `role` from JWT session. Validates body with Zod schema (defined in `lib/validations.ts`). Creates `prisma.surveyResponse.create()`. Returns `{ success: true, id }`.
+
+**Zod validation rules:**
+- `surveyType`: enum `["micro", "session"]`
+- `triggerPoint`: non-empty string, max 50 chars
+- `participantName`: optional string, max 100 chars
+- `responses`: array of 1-20 items, each with:
+  - `questionId`: non-empty string
+  - `questionText`: non-empty string, max 200 chars
+  - `type`: enum matching `SurveyQuestion.type`
+  - `value`: `string | number | string[]` — numbers must be 0-10 (covers both rating and NPS ranges), strings max 500 chars
 
 ### `GET /api/admin/feedback`
 
@@ -244,18 +269,18 @@ A hook used in layout components:
 - Multi-select tallies: parse JSON, count each option occurrence
 - Text responses: returned as flat list grouped by question
 
-### `GET /api/admin/feedback/export`
+### `GET /api/export/feedback`
 
-**Auth:** Admin only.
+**Auth:** Admin only. (Follows existing export route pattern: `/api/export/fees`, `/api/export/visits`)
 
-**Query params:** `format` (`csv` or `xlsx`), `type` (`summary` or `raw`), plus same filter params as above.
+**Query params:** `type` (`summary` or `raw`), plus same filter params as above.
 
 **Behavior:**
 
-- **Summary export:** One sheet/file with aggregated scores, role breakdowns, NPS, rating averages per trigger point
-- **Raw export:** Every response as a row — `timestamp, role, participantName, triggerPoint, questionText, value`
-- CSV via string building. XLSX via `xlsx` library (lightweight).
-- Returns file as download with appropriate `Content-Type` and `Content-Disposition` headers.
+- **Summary export:** CSV with aggregated scores, role breakdowns, NPS, rating averages per trigger point
+- **Raw export:** CSV with every response as a row — `timestamp, role, participantName, triggerPoint, questionText, value`
+- CSV generated via string building (no extra dependencies, consistent with existing export routes)
+- Returns file as download with `Content-Type: text/csv` and `Content-Disposition: attachment` headers
 
 ---
 
@@ -268,7 +293,7 @@ New page at `/admin/feedback`. Added to admin sidebar navigation.
 - Stat cards: Total Responses, Avg Overall Rating, NPS Score, Response Rate by Role
 - Bar chart (Recharts): average rating per trigger point, color-coded by role
 - Pie chart: response distribution by role
-- Date range filter at top (reuse `DateRangeFilter` component)
+- Date range filter at top (reuse `DateRangeFilter` component, add an "All time" preset that passes no date params to the API — falls back to unfiltered query)
 
 ### Tab 2: Responses
 
@@ -288,11 +313,10 @@ New page at `/admin/feedback`. Added to admin sidebar navigation.
 Dropdown button (top-right):
 - Export Summary (CSV)
 - Export All Responses (CSV)
-- Export All Responses (XLSX)
 
 ### Access Control
 
-Protected by admin middleware. Uses existing `adminAccess.settings` permission flag.
+Protected by admin middleware. Visible to all authenticated admins regardless of specific `AdminAccess` permission flags (same as the Home dashboard). Feedback review is relevant to all admin roles during the testing phase.
 
 ---
 
@@ -326,8 +350,9 @@ Protected by admin middleware. Uses existing `adminAccess.settings` permission f
 ### Offline (PWA)
 
 - Pending feedback queue in `localStorage`, capped at 50 entries
+- Reconnection detected via `window.addEventListener("online", ...)` event listener
 - On reconnect: sequential submission with 500ms delay between each
-- Failed retry: stays in queue for next cycle
+- Failed retry: stays in queue for next `online` event cycle
 
 ---
 
@@ -337,12 +362,12 @@ Protected by admin middleware. Uses existing `adminAccess.settings` permission f
 |---|---|---|
 | Prisma models | 1 | `SurveyResponse` |
 | Config files | 1 | `lib/survey-config.ts` |
-| Components | 5 | MicroSurvey, SessionSurvey, RatingInput, NpsInput, YesNoInput |
+| Components | 6 | SurveyProvider, MicroSurvey, SessionSurvey, RatingInput, NpsInput, YesNoInput |
 | Hooks | 1 | `useSurveyTrigger` |
-| API routes | 3 | POST feedback, GET admin feedback, GET export |
+| API routes | 3 | POST `/api/feedback`, GET `/api/admin/feedback`, GET `/api/export/feedback` |
 | Admin pages | 1 | Feedback dashboard (3 tabs) |
 | Integration points | 8 | Across tourist, admin, and verifier flows |
-| Existing page updates | 2 | Profile (Give Feedback link), Admin sidebar (Feedback nav item) |
+| Existing page updates | 5 | Profile (Give Feedback link), Admin sidebar (Feedback nav item), 3 layout files (SurveyProvider wrapper) |
 
 ### Out of Scope
 
