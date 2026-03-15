@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { subDays } from "date-fns";
@@ -81,10 +81,7 @@ export default function TreasuryReportPage() {
     fetchReport();
   }, [fetchReport]);
 
-  const dateLabel = useMemo(
-    () => `${formatDate(dateRange.from)} — ${formatDate(dateRange.to)}`,
-    [dateRange]
-  );
+  const dateLabel = `${formatDate(dateRange.from)} — ${formatDate(dateRange.to)}`;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -355,7 +352,7 @@ export default function TreasuryReportPage() {
                         {formatCurrency(p.totalAmount)}
                       </td>
                       <td className="py-1.5 text-center text-gray-800">
-                        {p.status}
+                        {STATUS_LABELS[p.status] ?? p.status}
                       </td>
                       <td className="py-1.5 text-right text-gray-800">
                         {p.paidAt ? formatDate(p.paidAt) : "—"}

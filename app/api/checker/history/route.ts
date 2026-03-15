@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { startOfWeek, endOfWeek, differenceInCalendarDays } from "date-fns";
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,58 +20,50 @@ export async function GET(req: NextRequest) {
     const dayEnd = new Date(date);
     dayEnd.setHours(23, 59, 59, 999);
 
-    const checkIns = await prisma.checkIn.findMany({
-      where: {
-        verifier: { userId: session.userId },
-        verifiedAt: { gte: dayStart, lte: dayEnd },
-      },
-      include: {
-        feePayment: {
-          select: {
-            referenceId: true,
-            user: { select: { firstName: true, lastName: true } },
+    // Weekly summary boundaries (always current week, independent of browsed date)
+    const now = new Date();
+    const monday = startOfWeek(now, { weekStartsOn: 1 });
+    const sunday = endOfWeek(now, { weekStartsOn: 1 });
+
+    // Run daily and weekly queries in parallel
+    const [checkIns, weekCheckIns] = await Promise.all([
+      prisma.checkIn.findMany({
+        where: {
+          verifier: { userId: session.userId },
+          verifiedAt: { gte: dayStart, lte: dayEnd },
+        },
+        include: {
+          feePayment: {
+            select: {
+              referenceId: true,
+              user: { select: { firstName: true, lastName: true } },
+            },
           },
         },
-      },
-      orderBy: { verifiedAt: "desc" },
-    });
+        orderBy: { verifiedAt: "desc" },
+      }),
+      prisma.checkIn.findMany({
+        where: {
+          verifier: { userId: session.userId },
+          checkDate: { gte: monday, lte: sunday },
+        },
+        select: { totalPersons: true, checkDate: true },
+      }),
+    ]);
 
     const summary = {
       totalPersons: checkIns.reduce((sum, ci) => sum + ci.totalPersons, 0),
       checkInCount: checkIns.length,
     };
 
-    // Weekly summary (always current week, independent of browsed date)
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
-    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const monday = new Date(now);
-    monday.setDate(monday.getDate() - mondayOffset);
-    monday.setHours(0, 0, 0, 0);
-
-    const sunday = new Date(monday);
-    sunday.setDate(sunday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
-
-    const weekCheckIns = await prisma.checkIn.findMany({
-      where: {
-        verifier: { userId: session.userId },
-        checkDate: { gte: monday, lte: sunday },
-      },
-      select: { totalPersons: true, checkDate: true },
-    });
-
     const weekTotalPersons = weekCheckIns.reduce((sum, ci) => sum + ci.totalPersons, 0);
-    const daysElapsed = mondayOffset + 1; // inclusive of today (Mon=1, Tue=2, ..., Sun=7)
+    const daysElapsed = differenceInCalendarDays(now, monday) + 1;
     const dailyAverage = daysElapsed > 0 ? Math.round((weekTotalPersons / daysElapsed) * 10) / 10 : 0;
 
     // Today's total from week data
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const todayStr = now.toISOString().slice(0, 10);
     const todayPersons = weekCheckIns
-      .filter((ci) => {
-        const d = new Date(ci.checkDate);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` === todayStr;
-      })
+      .filter((ci) => new Date(ci.checkDate).toISOString().slice(0, 10) === todayStr)
       .reduce((sum, ci) => sum + ci.totalPersons, 0);
 
     const todayVsAverage: "above" | "below" | "equal" =
