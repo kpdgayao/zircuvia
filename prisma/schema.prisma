@@ -45,6 +45,11 @@ enum PaymentStatus {
   FAILED
 }
 
+enum CodeType {
+  SIGNUP
+  PASSWORD_RESET
+}
+
 model User {
   id                 String    @id @default(cuid())
   email              String    @unique
@@ -65,6 +70,7 @@ model User {
   reviews         Review[]
   savedBusinesses SavedBusiness[]
   surveyResponses SurveyResponse[]
+  verificationCodes VerificationCode[]
 }
 
 model AdminAccess {
@@ -238,4 +244,20 @@ model SurveyResponse {
   @@index([role])
   @@index([triggerPoint])
   @@index([createdAt])
+}
+
+model VerificationCode {
+  id        String    @id @default(cuid())
+  userId    String
+  email     String
+  code      String
+  type      CodeType
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([email, code, type])
 }
