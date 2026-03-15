@@ -27,7 +27,7 @@ export default function CheckerLoginPage() {
         toast.error(data.message ?? "Login failed");
         return;
       }
-      router.push("/checker/verify");
+      router.push(data.redirectTo ?? "/checker/verify");
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {

@@ -7,6 +7,7 @@ import {
   ScrollText, Settings,
 } from "lucide-react";
 import { SignOutButton } from "@/components/sign-out-button";
+import { SurveyProvider } from "@/components/survey/SurveyProvider";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Home", icon: LayoutDashboard, permission: null },
@@ -48,7 +49,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <SignOutButton redirectTo="/admin-login" />
         </div>
       </aside>
-      <main className="flex-1 ml-64 p-8">{children}</main>
+      <main className="flex-1 ml-64 p-8">
+        <SurveyProvider role="ADMIN" variant="dialog">
+          {children}
+        </SurveyProvider>
+      </main>
     </div>
   );
 }

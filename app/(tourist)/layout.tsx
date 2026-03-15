@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getSession } from "@/lib/auth";
 import { BottomNav } from "@/components/bottom-nav";
 import { ZircuviaLogo } from "@/components/illustrations";
+import { SurveyProvider } from "@/components/survey/SurveyProvider";
 
 export default async function TouristLayout({
   children,
@@ -46,7 +47,9 @@ export default async function TouristLayout({
 
       {/* Main content */}
       <main className="flex-1 max-w-lg mx-auto w-full px-4 py-4 pb-20">
-        {children}
+        <SurveyProvider role="TOURIST" variant="sheet">
+          {children}
+        </SurveyProvider>
       </main>
 
       <BottomNav isSignedIn={isSignedIn} />

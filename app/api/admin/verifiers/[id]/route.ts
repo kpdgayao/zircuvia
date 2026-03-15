@@ -107,8 +107,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Verifier not found" }, { status: 404 });
     }
 
-    // Delete verifier profile first, then user
+    // Delete check-ins, then verifier profile, then user
     if (user.verifierProfile) {
+      await prisma.checkIn.deleteMany({ where: { verifierId: user.verifierProfile.id } });
       await prisma.verifierProfile.delete({ where: { userId: id } });
     }
     await prisma.user.delete({ where: { id } });

@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { SignOutButton } from "@/components/sign-out-button";
+import { SurveyProvider } from "@/components/survey/SurveyProvider";
 
 export default async function CheckerLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -15,7 +16,11 @@ export default async function CheckerLayout({ children }: { children: React.Reac
           <SignOutButton redirectTo="/checker-login" />
         </div>
       </header>
-      <main className="w-full max-w-md px-4 py-6">{children}</main>
+      <main className="w-full max-w-md px-4 py-6">
+        <SurveyProvider role="VERIFIER" variant="dialog">
+          {children}
+        </SurveyProvider>
+      </main>
     </div>
   );
 }

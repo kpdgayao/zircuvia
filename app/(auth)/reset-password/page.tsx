@@ -119,7 +119,7 @@ function ResetPasswordContent() {
             return;
           }
           toast.success("Password updated successfully");
-          router.push("/login");
+          router.push(meData.user.role === "VERIFIER" ? "/checker-login" : "/login");
           return;
         }
         toast.error(data.message ?? "Reset failed");
