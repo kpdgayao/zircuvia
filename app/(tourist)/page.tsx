@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { BusinessCard } from "@/components/business-card";
 import { OnboardingGuard } from "./onboarding-guard";
 import { DiscoverIllustration } from "@/components/illustrations";
+import { CircularEconomySection } from "@/components/circular-economy-section";
 import { prisma } from "@/lib/prisma";
 import {
   Leaf,
@@ -151,6 +152,9 @@ export default async function HomePage() {
             </div>
           </section>
 
+          {/* Circular Economy Education */}
+          <CircularEconomySection />
+
           {/* Eco Businesses section */}
           {ecoBusinesses.length > 0 && (
             <section>
@@ -277,6 +281,9 @@ export default async function HomePage() {
               ))}
             </div>
           </section>
+
+          {/* Circular Economy Education */}
+          <CircularEconomySection />
 
           {/* Top Places horizontal scroll */}
           {topBusinesses.length > 0 && (
