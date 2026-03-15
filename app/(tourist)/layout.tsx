@@ -26,9 +26,9 @@ export default async function TouristLayout({
             {isSignedIn ? (
               <Link href="/profile">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={undefined} alt={session.firstName} />
+                  <AvatarImage src={undefined} alt={session.firstName ?? ""} />
                   <AvatarFallback className="bg-[#2E7D32] text-white text-xs">
-                    {session.firstName.charAt(0).toUpperCase()}
+                    {(session.firstName ?? "?").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </Link>

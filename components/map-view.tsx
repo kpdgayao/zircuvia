@@ -4,27 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
-
-// Fix Leaflet default icon issue in Next.js
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
-
-const ecoIcon = new L.Icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-  className: "eco-marker",
-});
+import { useRef } from "react";
 
 export interface MapMarker {
   id: string;
@@ -41,12 +21,45 @@ interface MapViewProps {
   className?: string;
 }
 
+function useLeafletIcons() {
+  const initialized = useRef(false);
+  const ecoIconRef = useRef<L.Icon | null>(null);
+
+  if (!initialized.current && typeof window !== "undefined") {
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    });
+    ecoIconRef.current = new L.Icon({
+      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      iconRetinaUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+      className: "eco-marker",
+    });
+    initialized.current = true;
+  }
+
+  return ecoIconRef.current;
+}
+
 export function MapView({
   markers,
   center = [9.7489, 118.7354],
   zoom = 13,
   className = "h-full w-full",
 }: MapViewProps) {
+  const ecoIcon = useLeafletIcons();
+
   return (
     <>
       <style>{`
@@ -58,7 +71,7 @@ export function MapView({
         center={center}
         zoom={zoom}
         className={className}
-        scrollWheelZoom
+        scrollWheelZoom={true}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -68,7 +81,7 @@ export function MapView({
           <Marker
             key={m.id}
             position={[m.lat, m.lng]}
-            icon={m.isEcoCertified ? ecoIcon : undefined}
+            icon={m.isEcoCertified && ecoIcon ? ecoIcon : undefined}
           >
             <Popup>
               <div className="text-sm">
