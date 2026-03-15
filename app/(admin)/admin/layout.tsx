@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SurveyProvider } from "@/components/survey/SurveyProvider";
+import { GiveFeedbackButton } from "@/components/survey/GiveFeedbackButton";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Home", icon: LayoutDashboard, permission: null },
@@ -31,29 +32,30 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   );
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      <aside className="w-64 bg-white border-r p-4 flex flex-col fixed h-full">
-        <div className="font-bold text-lg text-[#2E7D32] mb-1">ZircuVia</div>
-        <div className="text-xs text-gray-500 mb-6">Content Management System</div>
-        <nav className="flex-1 space-y-1">
-          {visibleItems.map((item) => (
-            <Link key={item.href} href={item.href}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:text-[#2E7D32] hover:bg-green-50 transition text-sm">
-              <item.icon className="w-5 h-5" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="border-t pt-4 mt-4">
-          <div className="text-sm font-medium text-gray-700 mb-2">{session.firstName}</div>
-          <SignOutButton redirectTo="/admin-login" />
-        </div>
-      </aside>
-      <main className="flex-1 ml-64 p-8">
-        <SurveyProvider role="ADMIN" variant="dialog">
-          {children}
-        </SurveyProvider>
-      </main>
-    </div>
+    <SurveyProvider role="ADMIN" variant="dialog">
+      <div className="min-h-screen flex bg-gray-50">
+        <aside className="w-64 bg-white border-r p-4 flex flex-col fixed h-full">
+          <div className="font-bold text-lg text-[#2E7D32] mb-1">ZircuVia</div>
+          <div className="text-xs text-gray-500 mb-6">Content Management System</div>
+          <nav className="flex-1 space-y-1">
+            {visibleItems.map((item) => (
+              <Link key={item.href} href={item.href}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:text-[#2E7D32] hover:bg-green-50 transition text-sm">
+                <item.icon className="w-5 h-5" />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="mt-2">
+            <GiveFeedbackButton />
+          </div>
+          <div className="border-t pt-4 mt-4">
+            <div className="text-sm font-medium text-gray-700 mb-2">{session.firstName}</div>
+            <SignOutButton redirectTo="/admin-login" />
+          </div>
+        </aside>
+        <main className="flex-1 ml-64 p-8">{children}</main>
+      </div>
+    </SurveyProvider>
   );
 }
