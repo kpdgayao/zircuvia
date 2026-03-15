@@ -20,24 +20,25 @@ const MapView = dynamic(
 
 class MapErrorBoundary extends Component<
   { children: ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; errorMessage: string }
 > {
   constructor(props: { children: ReactNode }) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, errorMessage: "" };
   }
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, errorMessage: error?.message ?? "Unknown error" };
   }
   render() {
     if (this.state.hasError) {
       return (
         <div className="h-full w-full bg-gray-100 flex items-center justify-center">
           <div className="text-center px-4">
-            <p className="text-sm text-gray-600 mb-2">Unable to load the map.</p>
+            <p className="text-sm text-gray-600 mb-1">Unable to load the map.</p>
+            <p className="text-xs text-gray-400 mb-2">{this.state.errorMessage}</p>
             <button
               className="text-sm text-[#2E7D32] underline"
-              onClick={() => this.setState({ hasError: false })}
+              onClick={() => this.setState({ hasError: false, errorMessage: "" })}
             >
               Try again
             </button>
