@@ -47,7 +47,6 @@ function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const forced = searchParams.get("forced") === "true";
 
-  // forced=true means user is already logged in, skip to step 3
   const [step, setStep] = useState<1 | 2 | 3>(forced ? 3 : 1);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -55,15 +54,38 @@ function ResetPasswordContent() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [pwFocused, setPwFocused] = useState(false);
+  const [isMock, setIsMock] = useState(false);
 
   const rules = checkPassword(newPassword);
   const allRulesPass = Object.values(rules).every(Boolean);
 
-  // Step 1: Enter email
+  // Step 1: Enter email — call forgot-password API
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
-    toast.info("Your verification code is 123456");
-    setStep(2);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message ?? "Failed to send code");
+        return;
+      }
+      setIsMock(data.mock);
+      if (data.mock && data.code) {
+        toast.info(`Your verification code is ${data.code}`);
+      } else {
+        toast.success("If an account exists, a code has been sent to your email");
+      }
+      setStep(2);
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   // Step 2: Enter OTP
@@ -74,6 +96,28 @@ function ResetPasswordContent() {
       return;
     }
     setStep(3);
+  }
+
+  // Resend code in step 2
+  async function handleResend() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, type: "PASSWORD_RESET" }),
+      });
+      const data = await res.json();
+      if (data.mock && data.code) {
+        toast.info(`Your verification code is ${data.code}`);
+      } else {
+        toast.success("A new code has been sent to your email");
+      }
+    } catch {
+      toast.error("Failed to resend code.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   // Step 3: Enter new password
@@ -90,48 +134,32 @@ function ResetPasswordContent() {
 
     setLoading(true);
     try {
-      // For forced password change, we need to supply a dummy email + code
-      // since the user is already authenticated; the API still needs them.
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: forced ? "__forced__" : email,
-          code: forced ? "123456" : code,
-          newPassword,
-        }),
+        body: JSON.stringify(
+          forced
+            ? { newPassword, forced: true }
+            : { email, code, newPassword }
+        ),
       });
       const data = await res.json();
 
-      if (forced && !res.ok) {
-        // For forced flow, submit with actual session email via /api/auth/me
-        const meRes = await fetch("/api/auth/me");
-        const meData = await meRes.json();
-        if (meData.user?.email) {
-          const retryRes = await fetch("/api/auth/reset-password", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: meData.user.email, code: "123456", newPassword }),
-          });
-          const retryData = await retryRes.json();
-          if (!retryRes.ok) {
-            toast.error(retryData.message ?? "Reset failed");
-            return;
-          }
-          toast.success("Password updated successfully");
-          router.push(meData.user.role === "VERIFIER" ? "/checker-login" : "/login");
-          return;
+      if (!res.ok) {
+        if (res.status === 410) {
+          toast.error("Code expired. Please go back and request a new one.");
+        } else {
+          toast.error(data.message ?? "Reset failed");
         }
-        toast.error(data.message ?? "Reset failed");
         return;
       }
 
-      if (!res.ok) {
-        toast.error(data.message ?? "Reset failed");
-        return;
+      toast.success("Password updated successfully");
+      if (data.redirectTo) {
+        router.push(data.redirectTo);
+      } else {
+        router.push("/login");
       }
-      toast.success("Password reset successful");
-      router.push("/login");
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
@@ -170,9 +198,10 @@ function ResetPasswordContent() {
             <Button
               type="submit"
               className="w-full"
+              disabled={loading}
               style={{ backgroundColor: "#2E7D32" }}
             >
-              Send Verification Code
+              {loading ? "Sending…" : "Send Verification Code"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               <Link href="/login" className="hover:underline" style={{ color: "#2E7D32" }}>
@@ -185,7 +214,9 @@ function ResetPasswordContent() {
         {step === 2 && (
           <form onSubmit={handleCodeSubmit} className="space-y-6">
             <p className="text-sm text-center text-muted-foreground">
-              A code was sent to <strong>{email}</strong>
+              {isMock
+                ? <>A code was shown in the notification for <strong>{email}</strong></>
+                : <>A code was sent to <strong>{email}</strong></>}
             </p>
             <OTPInput value={code} onChange={setCode} />
             <Button
@@ -200,11 +231,12 @@ function ResetPasswordContent() {
               Didn&apos;t receive a code?{" "}
               <button
                 type="button"
-                className="font-medium hover:underline"
+                className="font-medium hover:underline disabled:opacity-50"
                 style={{ color: "#2E7D32" }}
-                onClick={() => toast.info("Your verification code is 123456")}
+                disabled={loading}
+                onClick={handleResend}
               >
-                Resend
+                {loading ? "Sending…" : "Resend"}
               </button>
             </p>
           </form>
