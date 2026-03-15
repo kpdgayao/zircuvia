@@ -10,6 +10,7 @@ Smart Circular Tourism Platform for Puerto Princesa City. A progressive web app 
 - **Authentication:** JWT (jose) with httpOnly cookies
 - **Maps:** React Leaflet with OpenStreetMap
 - **Payments:** Xendit payment gateway (with mock mode)
+- **Charts:** Recharts
 - **Deployment:** Docker on Railway
 
 ## Getting Started
@@ -56,6 +57,34 @@ The app runs at `http://localhost:3000`.
 | `XENDIT_SECRET_KEY` | No | Xendit API key (not needed in mock mode) |
 | `XENDIT_WEBHOOK_TOKEN` | No | Xendit webhook verification token |
 
+## Demo Accounts
+
+After running `pnpm db:seed`, the following accounts are available:
+
+| Role     | Email                        | Password    |
+| -------- | ---------------------------- | ----------- |
+| Tourist  | `tourist@demo.zircuvia.ph`   | `Demo2026!` |
+| Tourist  | `tourist2@demo.zircuvia.ph`  | `Demo2026!` |
+| Admin    | `admin@demo.zircuvia.ph`     | `Demo2026!` |
+| Verifier | `verifier@demo.zircuvia.ph`  | `Demo2026!` |
+
+### Demo Payment Flow
+
+The app includes a simulated payment gateway (when `XENDIT_MODE="mock"`):
+
+1. Log in as a tourist account
+2. Navigate to **Fees** and select **Pay Environmental Fee**
+3. Choose payer types and quantities, then click **Proceed to Payment**
+4. The checkout page presents a simulated payment gateway with:
+   - Order summary with line items
+   - Payment method selection (Credit/Debit Card, GCash, Maya)
+   - Card details form (any valid-format input works)
+5. Click **Pay** to process — a 3-second animation simulates processing
+6. On success, a receipt page shows the full fee breakdown, validity period, and a "PAID" stamp
+7. View the detailed invoice from the success page or the fees list
+
+No real charges are made in mock mode.
+
 ## Project Structure
 
 ```
@@ -77,6 +106,7 @@ public/            # Static assets, PWA manifest, service worker
 
 - **Tourist App:** Browse eco-certified hotels, restaurants, tours, and artisans. Save favorites, view on map, leave reviews.
 - **Environmental Fee:** Online payment flow for eco-tourism fees with QR-based verification.
+- **Simulated Payment Gateway:** Demo-ready checkout with payment method selection (Card, GCash, Maya), processing animation, and receipt generation.
 - **Admin Dashboard:** Manage businesses, eco-certifications, fee payments, visitor stats, and system logs.
 - **Verifier App:** Check-in tourists at locations by scanning fee payment references.
 - **PWA:** Installable with offline support for map tiles and business data.
@@ -94,6 +124,14 @@ public/            # Static assets, PWA manifest, service worker
 | `pnpm db:migrate` | Run Prisma migrations |
 | `pnpm db:studio` | Open Prisma Studio |
 | `pnpm db:seed` | Seed the database |
+
+## User Roles
+
+| Role | Access |
+|------|--------|
+| **Tourist** | Browse, save, pay fees, submit reviews |
+| **Admin** | Full system management with granular permissions |
+| **Verifier** | Check-in verification at assigned locations |
 
 ## Deployment
 
@@ -119,14 +157,6 @@ node .next/standalone/server.js
 ```
 
 The Dockerfile handles this automatically (see lines 26-28).
-
-## User Roles
-
-| Role | Access |
-|------|--------|
-| **Tourist** | Browse, save, pay fees, submit reviews |
-| **Admin** | Full system management with granular permissions |
-| **Verifier** | Check-in verification at assigned locations |
 
 ## Architecture Notes
 
