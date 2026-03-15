@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Eye, EyeOff, Mail, Lock, Loader2, MapPin, Shield, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,6 +25,29 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message ?? "Login failed");
+        return;
+      }
+      router.push(data.redirectTo ?? "/");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDemoLogin(demoEmail: string, demoPassword: string) {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: demoEmail, password: demoPassword }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -50,27 +75,43 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
+            <div className="relative">
+              <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden="true" />
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="pl-9"
+              />
+            </div>
           </div>
           <div className="space-y-1">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" aria-hidden="true" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="pl-9 pr-9"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
           </div>
           <Button
             type="submit"
@@ -78,9 +119,49 @@ export default function LoginPage() {
             disabled={loading}
             style={{ backgroundColor: "#2E7D32" }}
           >
-            {loading ? "Signing in…" : "Sign In"}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="size-4 animate-spin" />
+                Signing in...
+              </span>
+            ) : (
+              "Sign In"
+            )}
           </Button>
         </form>
+
+        <div className="mt-4 border-t pt-4">
+          <p className="text-xs text-muted-foreground text-center mb-2">Quick demo access</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => handleDemoLogin("tourist@demo.zircuvia.ph", "Demo2026!")}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-md text-xs font-medium hover:bg-green-100 transition-colors disabled:opacity-50"
+            >
+              <MapPin className="size-3.5" aria-hidden="true" />
+              Tourist
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDemoLogin("admin@demo.zircuvia.ph", "Demo2026!")}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-md text-xs font-medium hover:bg-green-100 transition-colors disabled:opacity-50"
+            >
+              <Shield className="size-3.5" aria-hidden="true" />
+              Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDemoLogin("verifier@demo.zircuvia.ph", "Demo2026!")}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-md text-xs font-medium hover:bg-green-100 transition-colors disabled:opacity-50"
+            >
+              <BadgeCheck className="size-3.5" aria-hidden="true" />
+              Verifier
+            </button>
+          </div>
+        </div>
 
         <div className="mt-4 text-center text-sm space-y-2">
           <p>

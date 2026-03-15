@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import {
   LayoutDashboard, Building2, Leaf, Receipt, Users, Calendar,
-  ScrollText, Settings, LogOut,
+  ScrollText, Settings,
 } from "lucide-react";
+import { SignOutButton } from "@/components/sign-out-button";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Home", icon: LayoutDashboard, permission: null },
@@ -44,10 +45,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </nav>
         <div className="border-t pt-4 mt-4">
           <div className="text-sm font-medium text-gray-700 mb-2">{session.firstName}</div>
-          <Link href="/api/auth/logout" className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 transition">
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </Link>
+          <SignOutButton redirectTo="/admin-login" />
         </div>
       </aside>
       <main className="flex-1 ml-64 p-8">{children}</main>

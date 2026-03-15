@@ -68,6 +68,8 @@ After running `pnpm db:seed`, the following accounts are available:
 | Admin    | `admin@demo.zircuvia.ph`     | `Demo2026!` |
 | Verifier | `verifier@demo.zircuvia.ph`  | `Demo2026!` |
 
+The login page includes **quick demo access buttons** (Tourist, Admin, Verifier) that auto-fill credentials and sign in with one click.
+
 ### Demo Payment Flow
 
 The app includes a simulated payment gateway (when `XENDIT_MODE="mock"`):
@@ -162,5 +164,5 @@ The Dockerfile handles this automatically (see lines 26-28).
 
 - **Tailwind CSS 4** uses `@tailwindcss/postcss` via `postcss.config.mjs` — this file is required for styles to compile
 - **Font:** Geist font is bundled locally (`public/fonts/`) to avoid build failures from Google Fonts network issues
-- **Auth:** JWT tokens stored in `zircuvia_session` httpOnly cookie, 7-day expiry
+- **Auth:** JWT tokens stored in `zircuvia_session` httpOnly cookie, 7-day expiry. Sign-out uses POST to `/api/auth/logout` via the shared `SignOutButton` component.
 - **PWA:** Service worker caches OpenStreetMap tiles (up to 500) and business API responses
