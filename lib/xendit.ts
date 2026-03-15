@@ -24,7 +24,7 @@ export async function createPaymentInvoice(params: CreatePaymentParams) {
   if (getXenditMode() === "mock") {
     return {
       id: `mock_${params.externalId}`,
-      invoice_url: `${process.env.NEXT_PUBLIC_APP_URL}/fees/checkout?ref=${params.externalId}`,
+      invoice_url: `/fees/checkout?ref=${params.externalId}`,
       external_id: params.externalId,
       status: "PENDING",
     };
