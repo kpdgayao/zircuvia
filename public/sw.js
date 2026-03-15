@@ -1,4 +1,4 @@
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 const CACHE_NAME = `zircuvia-v${CACHE_VERSION}`;
 const TILE_CACHE = `zircuvia-tiles-v${CACHE_VERSION}`;
 const API_CACHE = `zircuvia-api-v${CACHE_VERSION}`;
@@ -13,6 +13,9 @@ const PRECACHE_URLS = [
   "/manifest.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
+  "/icons/marker-icon.png",
+  "/icons/marker-icon-2x.png",
+  "/icons/marker-shadow.png",
   "/fonts/geist-latin.woff2",
 ];
 
