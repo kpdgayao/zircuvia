@@ -331,9 +331,22 @@ export default function VerifyPage() {
               <p className="text-sm text-gray-600 max-w-xs mx-auto">{verifyResult.message}</p>
             </>
           )}
-          <Button variant="outline" onClick={resetAll}>
-            New Search
-          </Button>
+          <div className="flex gap-2 justify-center">
+            {!verifyResult.success && selectedPayment && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setVerifyResult(null);
+                  setChecked(false);
+                }}
+              >
+                Back to Payment
+              </Button>
+            )}
+            <Button variant="outline" onClick={resetAll}>
+              New Search
+            </Button>
+          </div>
         </div>
       )}
 
