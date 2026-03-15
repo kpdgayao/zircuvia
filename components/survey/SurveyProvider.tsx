@@ -4,6 +4,7 @@ import { createContext, useContext, useCallback, useEffect } from "react";
 import type { Role } from "@prisma/client";
 import { toast } from "sonner";
 import { useSurveyTrigger } from "@/hooks/use-survey-trigger";
+import { queueAction, flushQueue } from "@/lib/offline-queue";
 import { MicroSurvey } from "./MicroSurvey";
 import { SessionSurvey } from "./SessionSurvey";
 
@@ -23,20 +24,7 @@ export function useSurveyContext() {
   return useContext(SurveyContext);
 }
 
-const PENDING_FEEDBACK_KEY = "zv_pending_feedback";
-const MAX_PENDING = 50;
-
-async function submitFeedback(payload: {
-  surveyType: string;
-  triggerPoint: string;
-  participantName?: string;
-  responses: Array<{
-    questionId: string;
-    questionText: string;
-    type: string;
-    value: string | number | string[];
-  }>;
-}): Promise<boolean> {
+async function submitFeedback(payload: Record<string, unknown>): Promise<boolean> {
   try {
     const res = await fetch("/api/feedback", {
       method: "POST",
@@ -46,40 +34,6 @@ async function submitFeedback(payload: {
     return res.ok;
   } catch {
     return false;
-  }
-}
-
-function queuePendingFeedback(payload: unknown): void {
-  try {
-    const pending = JSON.parse(
-      localStorage.getItem(PENDING_FEEDBACK_KEY) || "[]"
-    );
-    if (pending.length < MAX_PENDING) {
-      pending.push(payload);
-      localStorage.setItem(PENDING_FEEDBACK_KEY, JSON.stringify(pending));
-    }
-  } catch {
-    // localStorage unavailable
-  }
-}
-
-async function flushPendingFeedback(): Promise<void> {
-  try {
-    const pending = JSON.parse(
-      localStorage.getItem(PENDING_FEEDBACK_KEY) || "[]"
-    );
-    if (pending.length === 0) return;
-
-    const remaining = [];
-    for (const payload of pending) {
-      const ok = await submitFeedback(payload);
-      if (!ok) remaining.push(payload);
-      // 500ms delay between submissions
-      await new Promise((r) => setTimeout(r, 500));
-    }
-    localStorage.setItem(PENDING_FEEDBACK_KEY, JSON.stringify(remaining));
-  } catch {
-    // silent
   }
 }
 
@@ -103,10 +57,10 @@ export function SurveyProvider({
     complete,
   } = useSurveyTrigger(role);
 
-  // Flush pending feedback on mount and on reconnect
+  // Flush any pending offline queue on mount and on reconnect
   useEffect(() => {
-    flushPendingFeedback();
-    const handler = () => flushPendingFeedback();
+    flushQueue();
+    const handler = () => { flushQueue(); };
     window.addEventListener("online", handler);
     return () => window.removeEventListener("online", handler);
   }, []);
@@ -130,7 +84,7 @@ export function SurveyProvider({
       if (ok) {
         toast.success("Thanks for your feedback!");
       } else {
-        queuePendingFeedback(payload);
+        queueAction({ endpoint: "/api/feedback", method: "POST", body: payload });
         toast.info("Feedback saved — we'll submit it when you're back online.");
       }
       complete();
@@ -159,7 +113,7 @@ export function SurveyProvider({
       if (ok) {
         toast.success("Thanks for your detailed feedback!");
       } else {
-        queuePendingFeedback(payload);
+        queueAction({ endpoint: "/api/feedback", method: "POST", body: payload });
         toast.info("Feedback saved — we'll submit it when you're back online.");
       }
       complete();

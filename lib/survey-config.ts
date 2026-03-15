@@ -1,5 +1,21 @@
 import type { Role } from "@prisma/client";
 
+/** Shared type for a single question-answer pair in a survey response JSON */
+export interface SurveyResponseItem {
+  questionId: string;
+  questionText: string;
+  type: string;
+  value: string | number | string[];
+}
+
+/** Compute NPS score from an array of 0-10 ratings */
+export function computeNps(scores: number[]): number {
+  if (scores.length === 0) return 0;
+  const promoters = scores.filter((s) => s >= 9).length;
+  const detractors = scores.filter((s) => s <= 6).length;
+  return Math.round(((promoters - detractors) / scores.length) * 100);
+}
+
 export type SurveyQuestionType =
   | "rating"
   | "likert"

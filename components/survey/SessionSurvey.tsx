@@ -23,7 +23,7 @@ interface SessionSurveyProps {
       type: string;
       value: string | number | string[];
     }>
-  ) => void;
+  ) => Promise<void> | void;
   onDismiss: () => void;
 }
 
@@ -72,7 +72,7 @@ export function SessionSurvey({
         type: q.type,
         value: answers[q.id],
       }));
-    onComplete(participantName.trim() || undefined, responseItems);
+    await onComplete(participantName.trim() || undefined, responseItems);
     setSubmitting(false);
   }
 

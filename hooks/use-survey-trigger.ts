@@ -102,14 +102,12 @@ export function useSurveyTrigger(role: Role): UseSurveyTriggerReturn {
   const [sessionSurveyReady, setSessionSurveyReady] = useState(false);
   // Use ref to avoid stale closures in markAction
   const activeSurveyRef = useRef<SurveyConfig | null>(null);
+  const sessionSurveyReadyRef = useRef(false);
 
-  const updateActionCount = useCallback(() => {
-    const actions = getSessionStorage<Record<string, boolean>>(
-      STORAGE_KEY_ACTIONS,
-      {}
-    );
-    const count = Object.keys(actions).length;
-    if (count >= 3) {
+  const updateActionCount = useCallback((actionCount: number) => {
+    if (sessionSurveyReadyRef.current) return;
+    if (actionCount >= 3) {
+      sessionSurveyReadyRef.current = true;
       setSessionSurveyReady(true);
     }
   }, []);
@@ -123,7 +121,7 @@ export function useSurveyTrigger(role: Role): UseSurveyTriggerReturn {
       );
       actions[triggerPoint] = true;
       setSessionStorage(STORAGE_KEY_ACTIONS, actions);
-      updateActionCount();
+      updateActionCount(Object.keys(actions).length);
 
       // Don't show survey if one is already active
       if (activeSurveyRef.current) return;

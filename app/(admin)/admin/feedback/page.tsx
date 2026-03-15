@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -21,13 +21,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDate } from "@/lib/utils";
-
-interface ResponseItem {
-  questionId: string;
-  questionText: string;
-  type: string;
-  value: string | number | string[];
-}
+import type { SurveyResponseItem } from "@/lib/survey-config";
 
 interface SurveyResponseRow {
   id: string;
@@ -35,7 +29,7 @@ interface SurveyResponseRow {
   participantName: string | null;
   surveyType: string;
   triggerPoint: string;
-  responses: ResponseItem[];
+  responses: SurveyResponseItem[];
   createdAt: string;
 }
 
@@ -129,55 +123,33 @@ export default function FeedbackDashboardPage() {
       }))
     : [];
 
-  // Fetch ALL responses for text feedback tab (bypasses pagination)
-  const [allTextResponses, setAllTextResponses] = useState<Array<{
-    question: string;
-    answer: string;
-    role: string;
-    participant: string | null;
-    date: string;
-    triggerPoint: string;
-  }>>([]);
-
-  useEffect(() => {
-    async function fetchTextFeedback() {
-      try {
-        const params = new URLSearchParams();
-        if (roleFilter !== "all") params.set("role", roleFilter);
-        if (triggerFilter !== "all") params.set("triggerPoint", triggerFilter);
-        if (dateRange) {
-          params.set("from", dateRange.from.toISOString());
-          params.set("to", dateRange.to.toISOString());
+  // Derive text responses from already-fetched data (no separate API call)
+  const allTextResponses = useMemo(() => {
+    if (!data?.responses) return [];
+    const texts: Array<{
+      question: string;
+      answer: string;
+      role: string;
+      participant: string | null;
+      date: string;
+      triggerPoint: string;
+    }> = [];
+    for (const r of data.responses) {
+      for (const item of r.responses) {
+        if (item.type === "text" && typeof item.value === "string" && item.value.trim()) {
+          texts.push({
+            question: item.questionText,
+            answer: item.value,
+            role: r.role,
+            participant: r.participantName,
+            date: r.createdAt,
+            triggerPoint: r.triggerPoint,
+          });
         }
-        params.set("page", "1");
-        params.set("limit", "100"); // Fetch up to 100 for text tab
-
-        const res = await fetch(`/api/admin/feedback?${params}`);
-        if (res.ok) {
-          const json = await res.json();
-          const texts: typeof allTextResponses = [];
-          for (const r of json.responses) {
-            for (const item of r.responses) {
-              if (item.type === "text" && typeof item.value === "string" && item.value.trim()) {
-                texts.push({
-                  question: item.questionText,
-                  answer: item.value,
-                  role: r.role,
-                  participant: r.participantName,
-                  date: r.createdAt,
-                  triggerPoint: r.triggerPoint,
-                });
-              }
-            }
-          }
-          setAllTextResponses(texts);
-        }
-      } catch {
-        // silent
       }
     }
-    fetchTextFeedback();
-  }, [roleFilter, triggerFilter, dateRange]);
+    return texts;
+  }, [data]);
 
   return (
     <div className="space-y-6">

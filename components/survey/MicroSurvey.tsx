@@ -28,7 +28,7 @@ interface MicroSurveyProps {
       type: string;
       value: string | number | string[];
     }>
-  ) => void;
+  ) => Promise<void> | void;
   onDismiss: () => void;
   variant: "sheet" | "dialog";
 }
@@ -68,7 +68,7 @@ export function MicroSurvey({
         type: q.type,
         value: answers[q.id],
       }));
-    onComplete(responseItems);
+    await onComplete(responseItems);
     setSubmitting(false);
   }
 

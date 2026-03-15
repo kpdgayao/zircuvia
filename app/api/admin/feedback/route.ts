@@ -2,14 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseDateRangeFilter } from "@/lib/utils";
+import { computeNps, type SurveyResponseItem } from "@/lib/survey-config";
 import type { Prisma, Role } from "@prisma/client";
-
-interface ResponseItem {
-  questionId: string;
-  questionText: string;
-  type: string;
-  value: string | number | string[];
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,7 +54,7 @@ export async function GET(request: NextRequest) {
       byRole[r.role] = (byRole[r.role] ?? 0) + 1;
       bySurveyType[r.surveyType] = (bySurveyType[r.surveyType] ?? 0) + 1;
 
-      const items = r.responses as unknown as ResponseItem[];
+      const items = r.responses as unknown as SurveyResponseItem[];
       if (!Array.isArray(items)) continue;
 
       for (const item of items) {
@@ -88,15 +82,7 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // NPS = (promoters - detractors) / total * 100
-    let npsScore = 0;
-    if (npsScores.length > 0) {
-      const promoters = npsScores.filter((s) => s >= 9).length;
-      const detractors = npsScores.filter((s) => s <= 6).length;
-      npsScore = Math.round(
-        ((promoters - detractors) / npsScores.length) * 100
-      );
-    }
+    const npsScore = computeNps(npsScores);
 
     return NextResponse.json({
       summary: {
