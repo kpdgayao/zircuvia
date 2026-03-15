@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, useEffect, type ReactElement } from "react";
+import { useRef, useState, useEffect } from "react";
 
 export interface MapMarker {
   id: string;
@@ -18,13 +18,21 @@ interface MapViewProps {
   className?: string;
 }
 
+interface LeafletModules {
+  MapContainer: any;
+  TileLayer: any;
+  Marker: any;
+  Popup: any;
+  ecoIcon: any;
+}
+
 export function MapView({
   markers,
   center = [9.7489, 118.7354],
   zoom = 13,
   className = "h-full w-full",
 }: MapViewProps) {
-  const [mapContent, setMapContent] = useState<ReactElement | null>(null);
+  const [modules, setModules] = useState<LeafletModules | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const initialized = useRef(false);
 
@@ -34,18 +42,15 @@ export function MapView({
 
     (async () => {
       try {
-        // Dynamically import leaflet and react-leaflet only on client
         const [L, RL] = await Promise.all([
           import("leaflet"),
           import("react-leaflet"),
         ]);
 
-        // Import leaflet CSS
         await import("leaflet/dist/leaflet.css");
 
         const leaflet = L.default ?? L;
 
-        // Fix default icon paths
         delete (leaflet.Icon.Default.prototype as any)._getIconUrl;
         leaflet.Icon.Default.mergeOptions({
           iconRetinaUrl:
@@ -70,49 +75,13 @@ export function MapView({
           className: "eco-marker",
         });
 
-        const { MapContainer, TileLayer, Marker, Popup } = RL;
-
-        setMapContent(
-          <>
-            <style>{`.eco-marker { filter: hue-rotate(85deg) saturate(1.5); }`}</style>
-            <MapContainer
-              center={center}
-              zoom={zoom}
-              className={className}
-              scrollWheelZoom={true}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution="&copy; OpenStreetMap contributors"
-              />
-              {markers.map((m) => (
-                <Marker
-                  key={m.id}
-                  position={[m.lat, m.lng]}
-                  icon={m.isEcoCertified ? ecoIcon : undefined}
-                >
-                  <Popup>
-                    <div className="text-sm">
-                      <strong>{m.name}</strong>
-                      {m.isEcoCertified && (
-                        <span className="ml-1 text-[#2E7D32] text-xs font-medium">
-                          Eco
-                        </span>
-                      )}
-                      <br />
-                      <Link
-                        href={`/listings/${m.id}`}
-                        className="text-[#2E7D32] underline"
-                      >
-                        View Details
-                      </Link>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
-          </>,
-        );
+        setModules({
+          MapContainer: RL.MapContainer,
+          TileLayer: RL.TileLayer,
+          Marker: RL.Marker,
+          Popup: RL.Popup,
+          ecoIcon,
+        });
       } catch (err) {
         console.error("Failed to load map libraries:", err);
         setLoadError(
@@ -120,7 +89,7 @@ export function MapView({
         );
       }
     })();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loadError) {
     return (
@@ -139,7 +108,7 @@ export function MapView({
     );
   }
 
-  if (!mapContent) {
+  if (!modules) {
     return (
       <div className="h-full w-full bg-gray-100 flex items-center justify-center">
         <p className="text-sm text-gray-500">Loading map...</p>
@@ -147,5 +116,47 @@ export function MapView({
     );
   }
 
-  return mapContent;
+  const { MapContainer, TileLayer, Marker, Popup, ecoIcon } = modules;
+
+  return (
+    <>
+      <style>{`.eco-marker { filter: hue-rotate(85deg) saturate(1.5); }`}</style>
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        className={className}
+        scrollWheelZoom={true}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
+        />
+        {markers.map((m) => (
+          <Marker
+            key={m.id}
+            position={[m.lat, m.lng]}
+            icon={m.isEcoCertified ? ecoIcon : undefined}
+          >
+            <Popup>
+              <div className="text-sm">
+                <strong>{m.name}</strong>
+                {m.isEcoCertified && (
+                  <span className="ml-1 text-[#2E7D32] text-xs font-medium">
+                    Eco
+                  </span>
+                )}
+                <br />
+                <Link
+                  href={`/listings/${m.id}`}
+                  className="text-[#2E7D32] underline"
+                >
+                  View Details
+                </Link>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+    </>
+  );
 }
