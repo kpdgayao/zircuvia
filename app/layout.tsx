@@ -1,10 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Geist } from "next/font/google";
+import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
 import { PWARegister } from "@/components/pwa-register";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const geist = localFont({
+  src: "../public/fonts/geist-latin.woff2",
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "ZircuVia",
