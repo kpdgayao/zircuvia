@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { PAYER_TYPE_LABELS } from "@/lib/fee-constants";
 import { useSurveyContext } from "@/components/survey/SurveyProvider";
+import { Leaf } from "lucide-react";
 
 interface PaymentLine {
   payerType: string;
@@ -201,6 +202,39 @@ function SuccessContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Where Your Fee Goes */}
+      <div className="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50/50 to-white p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center">
+            <Leaf className="w-4 h-4 text-[#2E7D32]" />
+          </div>
+          <h3 className="font-semibold text-gray-800">Where Your Fee Goes</h3>
+        </div>
+
+        <p className="text-sm text-gray-600 leading-relaxed mb-3">
+          Your environmental fee is collected under City Ordinance No. 1058 and
+          helps fund:
+        </p>
+
+        <ul className="space-y-2 mb-4">
+          {[
+            "Conservation of natural resources and biodiversity",
+            "Waste management programs",
+            "Community environmental initiatives",
+            "Maintenance of protected areas and tourism sites",
+          ].map((item) => (
+            <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
+              <Leaf className="w-3.5 h-3.5 text-[#2E7D32] mt-0.5 shrink-0" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+
+        <p className="text-xs text-gray-500 italic">
+          Thank you for helping keep Puerto Princesa sustainable.
+        </p>
+      </div>
 
       {/* Actions */}
       <div className="space-y-3">
