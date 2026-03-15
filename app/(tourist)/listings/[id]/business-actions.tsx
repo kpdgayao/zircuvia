@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Bookmark, BookmarkCheck } from "lucide-react";
+import { toast } from "sonner";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { queueAction } from "@/lib/offline-queue";
 
 interface BusinessActionsProps {
   businessId: string;
@@ -16,6 +19,7 @@ export function BusinessActions({
   initialSaved = false,
 }: BusinessActionsProps) {
   const router = useRouter();
+  const isOnline = useOnlineStatus();
   const [saved, setSaved] = useState(initialSaved);
   const [loading, setLoading] = useState(false);
 
@@ -33,9 +37,13 @@ export function BusinessActions({
       if (res.ok) {
         const data = await res.json();
         setSaved(data.saved);
+        toast.success(data.saved ? "Saved!" : "Removed from saved");
       }
-    } catch (err) {
-      console.error("Save error:", err);
+    } catch {
+      // Offline: queue and optimistically update UI
+      queueAction({ endpoint: `/api/saved/${businessId}`, method: "POST" });
+      setSaved(!saved);
+      toast.info("Saved offline — will sync when you reconnect");
     } finally {
       setLoading(false);
     }

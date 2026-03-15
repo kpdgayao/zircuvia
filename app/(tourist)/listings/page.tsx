@@ -9,6 +9,7 @@ import { SearchWithHistory } from "@/components/search-with-history";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSurveyContext } from "@/components/survey/SurveyProvider";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 
 interface BusinessSummary {
   id: string;
@@ -60,9 +61,12 @@ function ListingsContent() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const isOnline = useOnlineStatus();
+  const [error, setError] = useState(false);
 
   const fetchBusinesses = useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const params = new URLSearchParams();
       params.set("page", String(page));
@@ -80,8 +84,8 @@ function ListingsContent() {
         const json = await res.json();
         setData(json);
       }
-    } catch (err) {
-      console.error("Error fetching businesses:", err);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -141,6 +145,25 @@ function ListingsContent() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-40 bg-gray-100 rounded-lg animate-pulse" />
           ))}
+        </div>
+      ) : error && businesses.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-sm text-gray-500 mb-1">
+            {isOnline ? "Failed to load listings" : "You're offline"}
+          </p>
+          <p className="text-xs text-gray-400 mb-4">
+            {isOnline
+              ? "Please try again."
+              : "Listings will load when you reconnect."}
+          </p>
+          {isOnline && (
+            <button
+              onClick={() => fetchBusinesses()}
+              className="rounded-lg bg-[#2E7D32] px-4 py-2 text-sm font-medium text-white hover:bg-[#1B5E20] transition"
+            >
+              Try Again
+            </button>
+          )}
         </div>
       ) : businesses.length === 0 ? (
         <p className="text-center text-sm text-gray-500 py-12">

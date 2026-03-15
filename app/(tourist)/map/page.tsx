@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { MapMarker } from "@/components/map-view";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 
 const MapView = dynamic(
   () => import("@/components/map-view").then((mod) => ({ default: mod.MapView })),
@@ -63,6 +64,7 @@ export default function MapPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isOnline = useOnlineStatus();
 
   const fetchBusinesses = useCallback(async () => {
     try {
@@ -119,8 +121,20 @@ export default function MapPage() {
       ) : (
         <>
           {error && (
-            <div className="absolute bottom-4 left-3 right-3 z-[1000] bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm text-red-700">
-              {error}
+            <div className="absolute top-2 left-2 right-2 z-[1000] rounded-lg bg-white/90 backdrop-blur px-3 py-2 text-center shadow">
+              <p className="text-xs text-gray-600">
+                {isOnline
+                  ? "Failed to load business markers"
+                  : "Offline — showing cached map tiles"}
+              </p>
+              {isOnline && (
+                <button
+                  onClick={() => fetchBusinesses()}
+                  className="mt-1 text-xs font-medium text-[#2E7D32] hover:underline"
+                >
+                  Retry
+                </button>
+              )}
             </div>
           )}
           <MapErrorBoundary>

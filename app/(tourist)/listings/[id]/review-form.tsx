@@ -6,6 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useSurveyContext } from "@/components/survey/SurveyProvider";
+import { toast } from "sonner";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { queueAction } from "@/lib/offline-queue";
 
 interface ReviewFormProps {
   businessId: string;
@@ -14,6 +17,7 @@ interface ReviewFormProps {
 
 export function ReviewForm({ businessId }: ReviewFormProps) {
   const router = useRouter();
+  const isOnline = useOnlineStatus();
   const { markAction } = useSurveyContext();
   const [rating, setRating] = useState(0);
   const [text, setText] = useState("");
@@ -50,7 +54,16 @@ export function ReviewForm({ businessId }: ReviewFormProps) {
       setText("");
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      // Offline: queue review for later
+      queueAction({
+        endpoint: `/api/businesses/${businessId}/reviews`,
+        method: "POST",
+        body: { rating, text: text.trim() || undefined },
+      });
+      toast.info("Review saved offline — will submit when you reconnect");
+      setSubmitted(true);
+      setRating(0);
+      setText("");
     } finally {
       setLoading(false);
     }

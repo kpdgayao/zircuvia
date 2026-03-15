@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { CounterInput } from "@/components/counter-input";
 import { formatCurrency } from "@/lib/utils";
 import { FEE_PRICES } from "@/lib/fee-constants";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { WifiOff } from "lucide-react";
 
 interface PayerLine {
   payerType: keyof typeof FEE_PRICES;
@@ -18,6 +20,7 @@ interface PayerLine {
 
 export default function PayPage() {
   const router = useRouter();
+  const isOnline = useOnlineStatus();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -174,11 +177,18 @@ export default function PayPage() {
         <p className="text-sm text-red-600 text-center">{error}</p>
       )}
 
+      {!isOnline && (
+        <div className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-500">
+          <WifiOff className="h-3.5 w-3.5" />
+          <span>Internet connection required for payments</span>
+        </div>
+      )}
+
       <Button
         className="w-full bg-[#2E7D32] hover:bg-[#1B5E20] text-white"
         size="lg"
         onClick={handleSubmit}
-        disabled={loading || totalPersons === 0}
+        disabled={!isOnline || loading || totalPersons === 0}
       >
         {loading ? "Processing..." : "Proceed to Payment"}
       </Button>

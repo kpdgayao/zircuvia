@@ -1,4 +1,4 @@
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const CACHE_NAME = `zircuvia-v${CACHE_VERSION}`;
 const TILE_CACHE = `zircuvia-tiles-v${CACHE_VERSION}`;
 const API_CACHE = `zircuvia-api-v${CACHE_VERSION}`;
@@ -48,57 +48,29 @@ self.addEventListener("message", (event) => {
   }
 });
 
-// Background sync for saved items
-self.addEventListener("sync", (event) => {
-  if (event.tag === "sync-saved") {
-    event.waitUntil(syncSavedItems());
-  }
-});
+// Stale-While-Revalidate: serve cache immediately, update in background
+async function staleWhileRevalidate(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
 
-async function syncSavedItems() {
-  try {
-    const db = await openSyncDB();
-    const tx = db.transaction("pending-saves", "readonly");
-    const store = tx.objectStore("pending-saves");
-    const items = await idbGetAll(store);
-
-    for (const item of items) {
-      try {
-        const res = await fetch("/api/saved", {
-          method: item.method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(item.body),
-        });
-        if (res.ok) {
-          const delTx = db.transaction("pending-saves", "readwrite");
-          delTx.objectStore("pending-saves").delete(item.id);
-        }
-      } catch {
-        // Will retry on next sync
+  const fetchPromise = fetch(request)
+    .then((response) => {
+      if (response.ok) {
+        cache.put(request, response.clone());
       }
-    }
-  } catch {
-    // IndexedDB not available
+      return response;
+    })
+    .catch(() => null);
+
+  // Return cached immediately if available, otherwise wait for network
+  if (cached) {
+    // Fire-and-forget: update cache in background
+    void fetchPromise;
+    return cached;
   }
-}
-
-function openSyncDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open("zircuvia-sync", 1);
-    req.onupgradeneeded = () => {
-      req.result.createObjectStore("pending-saves", { keyPath: "id" });
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function idbGetAll(store) {
-  return new Promise((resolve, reject) => {
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
+  const networkResponse = await fetchPromise;
+  if (networkResponse) return networkResponse;
+  return new Response("Offline", { status: 503 });
 }
 
 // Fetch handler with smart routing
@@ -130,17 +102,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache business directory API: network-first
-  if (url.pathname === "/api/businesses" && request.method === "GET") {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(API_CACHE).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
+  // API routes: stale-while-revalidate for GET requests
+  if (
+    request.method === "GET" &&
+    (url.pathname === "/api/businesses" || url.pathname === "/api/saved")
+  ) {
+    event.respondWith(staleWhileRevalidate(request, API_CACHE));
     return;
   }
 
