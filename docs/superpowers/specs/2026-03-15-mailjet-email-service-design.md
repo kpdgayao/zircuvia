@@ -123,12 +123,27 @@ Simple inline HTML strings within each function. Clean, minimal design — logo 
 4. Call `sendPasswordChangedEmail(email, firstName)`
 5. Return success
 
+### `POST /api/auth/reset-password` — forced flow (`?forced=true`)
+
+When a logged-in user is forced to change their password (`mustChangePassword` flag), they are already authenticated. This flow bypasses OTP verification entirely:
+
+1. Read session via `getSession()` from `lib/auth.ts`
+2. If valid session exists: accept `{ newPassword }` only — no email/code needed
+3. Hash new password, update user, clear `mustChangePassword` flag
+4. Call `sendPasswordChangedEmail(email, firstName)`
+5. Return success with role-based redirect (VERIFIER → /checker-login, others → /login)
+
+This is secure because the user already proved their identity by logging in.
+
 ### `POST /api/auth/resend-otp` (new route)
 
-1. Receive `{ userId, type }` (SIGNUP or PASSWORD_RESET)
-2. Invalidate any existing unused codes for that user+type
-3. Generate new code, store, send email
-4. Return `{ mock }`
+1. Receive `{ email, type }` (SIGNUP or PASSWORD_RESET)
+2. Look up user by email
+3. Invalidate any existing unused codes for that user+type
+4. Generate new code, store, send email
+5. Return `{ mock }`
+
+Note: Uses `email` (not `userId`) because the PASSWORD_RESET flow on the frontend only has the email in state — `forgot-password` does not return a `userId`.
 
 ## Frontend Changes
 
@@ -150,7 +165,7 @@ Check `response.mock` — if `true`, show toast with the actual code (same as to
 - Step 1: Call `POST /api/auth/forgot-password`. Show "Check your email" or toast with code based on `mock` flag
 - Step 2: No change (user types 6-digit code)
 - Step 3: Call modified `POST /api/auth/reset-password` with email + code + newPassword
-- Forced password change flow (`?forced=true`): unchanged
+- Forced password change flow (`?forced=true`): simplified — send only `{ newPassword }` since the user is already authenticated. The server reads the session to identify the user, bypassing OTP entirely
 
 ### No changes needed to
 
@@ -181,8 +196,10 @@ Add the 4 Mailjet env vars to the Railway service. Once set, the app automatical
 - **No email enumeration:** Forgot-password returns generic success whether or not the email exists
 - **Code expiry:** 10 minutes, enforced server-side
 - **Single use:** Codes marked as used after consumption, can't be replayed
+- **Mock mode code exposure:** When `mock: true`, the OTP code is returned in the API response so the frontend can show it via toast. This only happens when Mailjet env vars are not set. In production (Railway with env vars configured), codes are never exposed in responses.
 - **Codes not logged in production:** Only logged to console in mock mode
-- **Rate limiting:** Out of scope for this iteration (future improvement)
+- **Brute-force risk (known):** A 6-digit code with a 10-minute window is technically brute-forceable without rate limiting. Acceptable for a demo prototype. Rate limiting is a priority for the next iteration.
+- **Rate limiting:** Out of scope for this iteration (priority future improvement)
 
 ## Scope Summary
 
