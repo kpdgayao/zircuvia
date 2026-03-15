@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -7,39 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { CheckCircle2, XCircle, Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
 import { ZircuviaLogo } from "@/components/illustrations";
-
-interface PasswordRules {
-  minLength: boolean;
-  hasLower: boolean;
-  hasUpper: boolean;
-  hasNumber: boolean;
-  hasSpecial: boolean;
-}
-
-function checkPassword(pw: string): PasswordRules {
-  return {
-    minLength: pw.length >= 8,
-    hasLower: /[a-z]/.test(pw),
-    hasUpper: /[A-Z]/.test(pw),
-    hasNumber: /[0-9]/.test(pw),
-    hasSpecial: /[^a-zA-Z0-9]/.test(pw),
-  };
-}
-
-function RuleItem({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <li className="flex items-center gap-1.5 text-xs">
-      {ok ? (
-        <CheckCircle2 className="size-3.5 text-green-600 shrink-0" />
-      ) : (
-        <XCircle className="size-3.5 text-muted-foreground shrink-0" />
-      )}
-      <span className={ok ? "text-green-700" : "text-muted-foreground"}>{label}</span>
-    </li>
-  );
-}
+import { usePasswordRules, PasswordRulesList } from "@/components/password-rules";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -54,8 +24,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const rules = useMemo(() => checkPassword(password), [password]);
-  const allRulesPass = useMemo(() => Object.values(rules).every(Boolean), [rules]);
+  const { allPass: allRulesPass } = usePasswordRules(password);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -172,15 +141,7 @@ export default function RegisterPage() {
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
             </div>
-            {(pwFocused || password.length > 0) && (
-              <ul className="mt-1.5 space-y-0.5 pl-0.5">
-                <RuleItem ok={rules.minLength} label="At least 8 characters" />
-                <RuleItem ok={rules.hasUpper} label="One uppercase letter" />
-                <RuleItem ok={rules.hasLower} label="One lowercase letter" />
-                <RuleItem ok={rules.hasNumber} label="One number" />
-                <RuleItem ok={rules.hasSpecial} label="One special character" />
-              </ul>
-            )}
+            <PasswordRulesList password={password} visible={pwFocused || password.length > 0} />
           </div>
 
           <div className="space-y-1">

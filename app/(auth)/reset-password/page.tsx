@@ -8,39 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { OTPInput } from "@/components/otp-input";
-import { CheckCircle2, XCircle } from "lucide-react";
 import { ZircuviaLogo } from "@/components/illustrations";
-
-interface PasswordRules {
-  minLength: boolean;
-  hasLower: boolean;
-  hasUpper: boolean;
-  hasNumber: boolean;
-  hasSpecial: boolean;
-}
-
-function checkPassword(pw: string): PasswordRules {
-  return {
-    minLength: pw.length >= 8,
-    hasLower: /[a-z]/.test(pw),
-    hasUpper: /[A-Z]/.test(pw),
-    hasNumber: /[0-9]/.test(pw),
-    hasSpecial: /[^a-zA-Z0-9]/.test(pw),
-  };
-}
-
-function RuleItem({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <li className="flex items-center gap-1.5 text-xs">
-      {ok ? (
-        <CheckCircle2 className="size-3.5 text-green-600 shrink-0" />
-      ) : (
-        <XCircle className="size-3.5 text-muted-foreground shrink-0" />
-      )}
-      <span className={ok ? "text-green-700" : "text-muted-foreground"}>{label}</span>
-    </li>
-  );
-}
+import { usePasswordRules, PasswordRulesList } from "@/components/password-rules";
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -53,11 +22,11 @@ function ResetPasswordContent() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [pwFocused, setPwFocused] = useState(false);
   const [isMock, setIsMock] = useState(false);
 
-  const rules = checkPassword(newPassword);
-  const allRulesPass = Object.values(rules).every(Boolean);
+  const { allPass: allRulesPass } = usePasswordRules(newPassword);
 
   // Step 1: Enter email — call forgot-password API
   async function handleEmailSubmit(e: React.FormEvent) {
@@ -100,7 +69,7 @@ function ResetPasswordContent() {
 
   // Resend code in step 2
   async function handleResend() {
-    setLoading(true);
+    setResending(true);
     try {
       const res = await fetch("/api/auth/resend-otp", {
         method: "POST",
@@ -116,7 +85,7 @@ function ResetPasswordContent() {
     } catch {
       toast.error("Failed to resend code.");
     } finally {
-      setLoading(false);
+      setResending(false);
     }
   }
 
@@ -222,7 +191,7 @@ function ResetPasswordContent() {
             <Button
               type="submit"
               className="w-full"
-              disabled={code.length < 6}
+              disabled={code.length < 6 || resending}
               style={{ backgroundColor: "#2E7D32" }}
             >
               Verify Code
@@ -233,10 +202,10 @@ function ResetPasswordContent() {
                 type="button"
                 className="font-medium hover:underline disabled:opacity-50"
                 style={{ color: "#2E7D32" }}
-                disabled={loading}
+                disabled={resending}
                 onClick={handleResend}
               >
-                {loading ? "Sending…" : "Resend"}
+                {resending ? "Sending…" : "Resend"}
               </button>
             </p>
           </form>
@@ -255,15 +224,7 @@ function ResetPasswordContent() {
                 onFocus={() => setPwFocused(true)}
                 placeholder="••••••••"
               />
-              {(pwFocused || newPassword.length > 0) && (
-                <ul className="mt-1.5 space-y-0.5 pl-0.5">
-                  <RuleItem ok={rules.minLength} label="At least 8 characters" />
-                  <RuleItem ok={rules.hasUpper} label="One uppercase letter" />
-                  <RuleItem ok={rules.hasLower} label="One lowercase letter" />
-                  <RuleItem ok={rules.hasNumber} label="One number" />
-                  <RuleItem ok={rules.hasSpecial} label="One special character" />
-                </ul>
-              )}
+              <PasswordRulesList password={newPassword} visible={pwFocused || newPassword.length > 0} />
             </div>
             <div className="space-y-1">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>

@@ -1,4 +1,7 @@
 import { Client } from "node-mailjet";
+import { randomInt } from "crypto";
+import { prisma } from "@/lib/prisma";
+import type { CodeType } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -6,6 +9,7 @@ import { Client } from "node-mailjet";
 
 const FROM_EMAIL = process.env.MAILJET_FROM_EMAIL || "noreply@zircuvia.com";
 const FROM_NAME = process.env.MAILJET_FROM_NAME || "ZircuVia";
+const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
 export interface EmailResult {
   sent: boolean;
@@ -17,8 +21,53 @@ export function isEmailConfigured(): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// OTP helper
+// ---------------------------------------------------------------------------
+
+export async function createVerificationCode(
+  userId: string,
+  email: string,
+  type: CodeType,
+  { invalidateExisting = false }: { invalidateExisting?: boolean } = {}
+): Promise<string> {
+  const code = String(randomInt(100000, 999999));
+  const data = {
+    userId,
+    email,
+    code,
+    type,
+    expiresAt: new Date(Date.now() + OTP_EXPIRY_MS),
+  };
+
+  if (invalidateExisting) {
+    await prisma.$transaction([
+      prisma.verificationCode.updateMany({
+        where: { userId, type, usedAt: null },
+        data: { usedAt: new Date() },
+      }),
+      prisma.verificationCode.create({ data }),
+    ]);
+  } else {
+    await prisma.verificationCode.create({ data });
+  }
+
+  return code;
+}
+
+// ---------------------------------------------------------------------------
 // Low-level send
 // ---------------------------------------------------------------------------
+
+let _client: Client | null = null;
+function getMailjetClient(): Client {
+  if (!_client) {
+    _client = new Client({
+      apiKey: process.env.MAILJET_API_KEY!,
+      apiSecret: process.env.MAILJET_SECRET_KEY!,
+    });
+  }
+  return _client;
+}
 
 async function sendEmail(
   to: string,
@@ -30,10 +79,7 @@ async function sendEmail(
     return { sent: false, mock: true };
   }
 
-  const mailjet = new Client({
-    apiKey: process.env.MAILJET_API_KEY!,
-    apiSecret: process.env.MAILJET_SECRET_KEY!,
-  });
+  const mailjet = getMailjetClient();
 
   await mailjet.post("send", { version: "v3.1" }).request({
     Messages: [

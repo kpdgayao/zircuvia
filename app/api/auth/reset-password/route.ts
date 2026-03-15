@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
         type: "PASSWORD_RESET",
         usedAt: null,
       },
+      include: { user: true },
       orderBy: { createdAt: "desc" },
     });
 
@@ -73,10 +74,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
-    if (!user) {
-      return NextResponse.json({ message: "No account found with this email" }, { status: 404 });
-    }
+    const user = verification.user;
 
     const passwordHash = await bcrypt.hash(data.newPassword, 12);
 

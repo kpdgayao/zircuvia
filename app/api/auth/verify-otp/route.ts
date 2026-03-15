@@ -12,40 +12,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "userId and code are required" }, { status: 400 });
     }
 
-    const now = new Date();
-
-    // Check if there's an expired code first (for better error messaging)
-    const expiredCode = await prisma.verificationCode.findFirst({
-      where: {
-        userId,
-        type: "SIGNUP",
-        usedAt: null,
-        code,
-        expiresAt: { lt: now },
-      },
-    });
-
-    if (expiredCode) {
-      return NextResponse.json(
-        { message: "Code expired. Please request a new one." },
-        { status: 410 }
-      );
-    }
-
-    // Find a valid, unused, non-expired code for this user
+    // Find matching unused code for this user
     const verification = await prisma.verificationCode.findFirst({
       where: {
         userId,
         type: "SIGNUP",
         usedAt: null,
         code,
-        expiresAt: { gt: now },
       },
       orderBy: { createdAt: "desc" },
     });
 
     if (!verification) {
       return NextResponse.json({ message: "Invalid verification code" }, { status: 401 });
+    }
+
+    if (verification.expiresAt < new Date()) {
+      return NextResponse.json(
+        { message: "Code expired. Please request a new one." },
+        { status: 410 }
+      );
     }
 
     // Mark code as used and verify user in a transaction

@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomInt } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations";
-import { sendOtpEmail } from "@/lib/email";
+import { sendOtpEmail, createVerificationCode } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const data = registerSchema.parse(body);
 
-    const existing = await prisma.user.findUnique({
-      where: { email: data.email },
-    });
+    const [existing, passwordHash] = await Promise.all([
+      prisma.user.findUnique({ where: { email: data.email } }),
+      bcrypt.hash(data.password, 12),
+    ]);
 
     if (existing) {
       return NextResponse.json(
@@ -21,8 +21,6 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
-
-    const passwordHash = await bcrypt.hash(data.password, 12);
 
     const user = await prisma.user.create({
       data: {
@@ -34,17 +32,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Generate OTP and store in DB
-    const code = String(randomInt(100000, 999999));
-    await prisma.verificationCode.create({
-      data: {
-        userId: user.id,
-        email: data.email,
-        code,
-        type: "SIGNUP",
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
-      },
-    });
+    const code = await createVerificationCode(user.id, data.email, "SIGNUP");
 
     const result = await sendOtpEmail(data.email, code, data.firstName);
 

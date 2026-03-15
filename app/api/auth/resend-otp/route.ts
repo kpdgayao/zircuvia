@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomInt } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { sendOtpEmail, sendPasswordResetEmail } from "@/lib/email";
+import { sendOtpEmail, sendPasswordResetEmail, createVerificationCode } from "@/lib/email";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -25,22 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Account already verified." }, { status: 400 });
     }
 
-    // Invalidate previous unused codes
-    await prisma.verificationCode.updateMany({
-      where: { userId: user.id, type, usedAt: null },
-      data: { usedAt: new Date() },
-    });
-
-    const code = String(randomInt(100000, 999999));
-    await prisma.verificationCode.create({
-      data: {
-        userId: user.id,
-        email: user.email,
-        code,
-        type,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      },
-    });
+    const code = await createVerificationCode(user.id, user.email, type, { invalidateExisting: true });
 
     const result =
       type === "SIGNUP"
