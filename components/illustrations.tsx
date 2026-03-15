@@ -149,18 +149,10 @@ export function SaveIllustration({ className }: { className?: string }) {
 
 export function ZircuviaLogo({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Green circle background */}
-      <circle cx="50" cy="50" r="48" fill="#3E8E3E" />
-      {/* White flowing Z shape */}
-      <path
-        d="M19 34 C28 28 42 30 56 34 Q65 37 65 34 L65 34 Q64 42 56 46 C44 52 30 46 20 54 Q14 59 20 66 C30 74 46 72 62 68 Q70 66 80 66"
-        stroke="white"
-        strokeWidth="8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-    </svg>
+    <img
+      src="/icons/icon-512.png"
+      alt="Zircuvia"
+      className={className}
+    />
   );
 }

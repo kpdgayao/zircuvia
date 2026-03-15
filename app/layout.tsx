@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   title: "ZircuVia",
   description: "Smart Circular Tourism Platform for Puerto Princesa City",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icons/icon-192.png",
+  },
 };
 
 export const viewport: Viewport = {
