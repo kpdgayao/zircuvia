@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomInt } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations";
+import { sendOtpEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,8 +34,27 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Generate OTP and store in DB
+    const code = String(randomInt(100000, 999999));
+    await prisma.verificationCode.create({
+      data: {
+        userId: user.id,
+        email: data.email,
+        code,
+        type: "SIGNUP",
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      },
+    });
+
+    const result = await sendOtpEmail(data.email, code, data.firstName);
+
     return NextResponse.json(
-      { message: "Registration successful. Please verify your email.", userId: user.id },
+      {
+        message: "Registration successful. Please verify your email.",
+        userId: user.id,
+        mock: result.mock,
+        ...(result.mock ? { code } : {}),
+      },
       { status: 201 }
     );
   } catch (err) {
