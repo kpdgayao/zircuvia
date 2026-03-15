@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GiveFeedbackButton } from "@/components/survey/GiveFeedbackButton";
 import { handleAuthError } from "@/lib/checker-utils";
-import { ChevronLeft, ChevronRight, Loader2, WifiOff, ClipboardList } from "lucide-react";
+import {
+  ChevronLeft, ChevronRight, Loader2, WifiOff, ClipboardList,
+  Users, TrendingUp, CalendarCheck, ArrowUp, ArrowDown, Minus,
+} from "lucide-react";
 
 interface HistoryCheckIn {
   id: string;
@@ -21,6 +24,14 @@ interface HistoryCheckIn {
 interface HistorySummary {
   totalPersons: number;
   checkInCount: number;
+}
+
+interface WeeklySummary {
+  totalPersons: number;
+  checkInCount: number;
+  dailyAverage: number;
+  todayPersons: number;
+  todayVsAverage: "above" | "below" | "equal";
 }
 
 function formatDateLabel(date: Date): string {
@@ -66,6 +77,7 @@ export default function HistoryPage() {
   const [checkIns, setCheckIns] = useState<HistoryCheckIn[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [weeklySummary, setWeeklySummary] = useState<WeeklySummary | null>(null);
 
   const fetchHistory = useCallback(async (date: Date) => {
     setLoading(true);
@@ -77,6 +89,7 @@ export default function HistoryPage() {
       const data = await res.json();
       setSummary(data.summary);
       setCheckIns(data.checkIns);
+      setWeeklySummary(data.weeklySummary ?? null);
     } catch {
       setError(true);
       setSummary({ totalPersons: 0, checkInCount: 0 });
@@ -109,6 +122,55 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-4">
+      {/* Weekly Summary */}
+      {weeklySummary && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-3">
+              <CardTitle className="text-xs font-medium text-gray-500">This Week</CardTitle>
+              <Users className="h-4 w-4 text-[#2E7D32]" />
+            </CardHeader>
+            <CardContent className="px-3 pb-3">
+              <div className="text-xl font-bold">{weeklySummary.totalPersons}</div>
+              <p className="text-[10px] text-gray-400">{weeklySummary.checkInCount} check-in(s)</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-3">
+              <CardTitle className="text-xs font-medium text-gray-500">Daily Average</CardTitle>
+              <TrendingUp className="h-4 w-4 text-[#2E7D32]" />
+            </CardHeader>
+            <CardContent className="px-3 pb-3">
+              <div className="text-xl font-bold">{weeklySummary.dailyAverage}</div>
+              <p className="text-[10px] text-gray-400">visitors / day</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-3">
+              <CardTitle className="text-xs font-medium text-gray-500">Today</CardTitle>
+              <CalendarCheck className="h-4 w-4 text-[#2E7D32]" />
+            </CardHeader>
+            <CardContent className="px-3 pb-3">
+              <div className="flex items-center gap-1">
+                <span className="text-xl font-bold">{weeklySummary.todayPersons}</span>
+                {weeklySummary.todayVsAverage === "above" && (
+                  <ArrowUp className="h-4 w-4 text-green-600" />
+                )}
+                {weeklySummary.todayVsAverage === "below" && (
+                  <ArrowDown className="h-4 w-4 text-red-500" />
+                )}
+                {weeklySummary.todayVsAverage === "equal" && (
+                  <Minus className="h-4 w-4 text-gray-400" />
+                )}
+              </div>
+              <p className="text-[10px] text-gray-400">vs. daily average</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Date header + summary */}
       <div className="bg-gray-50 rounded-lg p-4">
         <p className="text-sm font-semibold text-gray-800">
