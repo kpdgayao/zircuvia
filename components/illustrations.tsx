@@ -149,18 +149,18 @@ export function SaveIllustration({ className }: { className?: string }) {
 
 export function ZircuviaLogo({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Leaf shape */}
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      {/* Green circle background */}
+      <circle cx="50" cy="50" r="48" fill="#3E8E3E" />
+      {/* White flowing Z shape */}
       <path
-        d="M14 3 C8 8 4 16 6 22 C8 26 12 27 14 25 C16 27 20 26 22 22 C24 16 20 8 14 3Z"
-        fill="#2E7D32"
+        d="M19 34 C28 28 42 30 56 34 Q65 37 65 34 L65 34 Q64 42 56 46 C44 52 30 46 20 54 Q14 59 20 66 C30 74 46 72 62 68 Q70 66 80 66"
+        stroke="white"
+        strokeWidth="8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
       />
-      {/* Leaf vein */}
-      <path d="M14 7 L14 22" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
-      <path d="M14 12 L10 16" stroke="white" strokeWidth="0.8" strokeLinecap="round" opacity="0.4" />
-      <path d="M14 14 L18 18" stroke="white" strokeWidth="0.8" strokeLinecap="round" opacity="0.4" />
-      {/* Pin dot */}
-      <circle cx="14" cy="11" r="2.5" fill="white" opacity="0.9" />
     </svg>
   );
 }
