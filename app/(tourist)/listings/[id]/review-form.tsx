@@ -5,6 +5,7 @@ import { StarRating } from "@/components/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useSurveyContext } from "@/components/survey/SurveyProvider";
 
 interface ReviewFormProps {
   businessId: string;
@@ -13,6 +14,7 @@ interface ReviewFormProps {
 
 export function ReviewForm({ businessId }: ReviewFormProps) {
   const router = useRouter();
+  const { markAction } = useSurveyContext();
   const [rating, setRating] = useState(0);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,6 +45,7 @@ export function ReviewForm({ businessId }: ReviewFormProps) {
       }
 
       setSubmitted(true);
+      markAction("business_review");
       setRating(0);
       setText("");
       router.refresh();

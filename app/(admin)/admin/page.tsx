@@ -8,6 +8,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { PAYER_TYPE_LABELS } from "@/lib/fee-constants";
 import { Users, Receipt, TrendingUp, MapPin } from "lucide-react";
+import { SurveyTrigger } from "@/components/survey/SurveyTrigger";
 
 export default async function AdminDashboardPage() {
   const session = await getSession();
@@ -172,6 +173,7 @@ export default async function AdminDashboardPage() {
           </Table>
         </CardContent>
       </Card>
+      <SurveyTrigger triggerPoint="analytics_view" delay={2000} />
     </div>
   );
 }

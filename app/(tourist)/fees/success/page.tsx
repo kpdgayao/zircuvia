@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { PAYER_TYPE_LABELS } from "@/lib/fee-constants";
+import { useSurveyContext } from "@/components/survey/SurveyProvider";
 
 interface PaymentLine {
   payerType: string;
@@ -33,6 +34,7 @@ function SuccessContent() {
   const [payment, setPayment] = useState<PaymentInfo | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const [showConfetti, setShowConfetti] = useState(true);
+  const { markAction } = useSurveyContext();
 
   useEffect(() => {
     if (!referenceId) return;
@@ -57,6 +59,10 @@ function SuccessContent() {
     const timer = setTimeout(() => setShowConfetti(false), 3000);
     return () => clearTimeout(timer);
   }, [referenceId]);
+
+  useEffect(() => {
+    if (payment) markAction("fee_payment");
+  }, [payment, markAction]);
 
   const handleEmailInvoice = () => {
     setToastVisible(true);

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { BusinessActions } from "./business-actions";
 import { ReviewForm } from "./review-form";
+import { SurveyTrigger } from "@/components/survey/SurveyTrigger";
 
 async function getBusiness(id: string) {
   try {
@@ -69,6 +70,7 @@ export default async function BusinessDetailPage({
 
   return (
     <div className="space-y-5 pb-4">
+      <SurveyTrigger triggerPoint="business_detail" delay={3000} />
       {/* Cover photo */}
       {business.coverPhotoUrl && (
         <div className="-mx-4 h-48 bg-gray-100 overflow-hidden">

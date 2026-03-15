@@ -8,6 +8,7 @@ import { CategoryTabs, getCategoryEnums, categoryEnumToTab, type CategoryTab } f
 import { SearchWithHistory } from "@/components/search-with-history";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useSurveyContext } from "@/components/survey/SurveyProvider";
 
 interface BusinessSummary {
   id: string;
@@ -49,6 +50,7 @@ export default function ListingsPage() {
 function ListingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { markAction } = useSurveyContext();
   const categoryParam = searchParams.get("category");
   const initialTab = categoryParam ? categoryEnumToTab(categoryParam) : "All";
 
@@ -88,6 +90,10 @@ function ListingsContent() {
   useEffect(() => {
     fetchBusinesses();
   }, [fetchBusinesses]);
+
+  useEffect(() => {
+    if (data && data.businesses.length > 0 && search) markAction("business_search");
+  }, [data, search, markAction]);
 
   // Reset page when filters change
   useEffect(() => {

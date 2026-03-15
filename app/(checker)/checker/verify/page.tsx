@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { PAYER_TYPE_LABELS } from "@/lib/fee-constants";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { Search, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { useSurveyContext } from "@/components/survey/SurveyProvider";
 
 interface PaymentLine {
   id: string;
@@ -36,6 +37,7 @@ interface PaymentResult {
 }
 
 export default function VerifyPage() {
+  const { markAction } = useSurveyContext();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PaymentResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,6 +63,7 @@ export default function VerifyPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setResults(data.results || []);
+      markAction("fee_scan");
     } catch {
       setResults([]);
     } finally {
@@ -91,6 +94,7 @@ export default function VerifyPage() {
         setVerifyResult({ success: false, message: data.error || "Verification failed" });
       } else {
         setVerifyResult({ success: true, message: "Payment Verified" });
+        markAction("check_in");
       }
     } catch {
       setVerifyResult({ success: false, message: "Verification failed" });

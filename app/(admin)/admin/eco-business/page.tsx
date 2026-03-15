@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Leaf, CheckCircle, XCircle } from "lucide-react";
 import { CATEGORY_LABELS } from "@/lib/business-constants";
+import { useSurveyContext } from "@/components/survey/SurveyProvider";
 
 interface BusinessRow extends Record<string, unknown> {
   id: string;
@@ -19,6 +20,7 @@ interface BusinessRow extends Record<string, unknown> {
 }
 
 export default function EcoBusinessPage() {
+  const { markAction } = useSurveyContext();
   const [pendingData, setPendingData] = useState<BusinessRow[]>([]);
   const [approvedData, setApprovedData] = useState<BusinessRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,7 @@ export default function EcoBusinessPage() {
       });
       if (res.ok) {
         fetchData();
+        markAction("eco_certification");
       }
     } catch {
       // ignore
