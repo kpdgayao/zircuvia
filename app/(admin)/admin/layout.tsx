@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import {
   LayoutDashboard, Building2, Leaf, Receipt, Users, Calendar,
-  ScrollText, Settings,
+  ScrollText, Settings, MessageSquare,
 } from "lucide-react";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SurveyProvider } from "@/components/survey/SurveyProvider";
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: "/admin/visits", label: "Visits", icon: Users, permission: "visitorStats" },
   { href: "/admin/events", label: "Events & Promos", icon: Calendar, permission: "eventsAndPromos" },
   { href: "/admin/logs", label: "System Logs", icon: ScrollText, permission: "systemLogs" },
+  { href: "/admin/feedback", label: "Feedback", icon: MessageSquare, permission: null },
   { href: "/admin/settings", label: "Settings", icon: Settings, permission: "settings" },
 ] as const;
 
