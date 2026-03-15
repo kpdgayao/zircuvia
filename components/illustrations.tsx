@@ -147,6 +147,95 @@ export function SaveIllustration({ className }: { className?: string }) {
   );
 }
 
+export function CircularEconomyIllustration({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-label="Circular economy illustration showing nature cycle">
+      <defs>
+        <linearGradient id="ce-sky" x1="120" y1="0" x2="120" y2="160" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#E8F5E9" />
+          <stop offset="1" stopColor="#C8E6C9" />
+        </linearGradient>
+        <linearGradient id="ce-water" x1="120" y1="160" x2="120" y2="240" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#4DB6AC" />
+          <stop offset="1" stopColor="#26A69A" />
+        </linearGradient>
+      </defs>
+      {/* Background circle */}
+      <circle cx="120" cy="120" r="110" fill="url(#ce-sky)" />
+      {/* Water / sea */}
+      <ellipse cx="120" cy="185" rx="110" ry="35" fill="url(#ce-water)" opacity="0.5" />
+      {/* Island */}
+      <ellipse cx="120" cy="165" rx="50" ry="12" fill="#A5D6A7" />
+      <ellipse cx="120" cy="163" rx="45" ry="9" fill="#81C784" />
+      {/* Palm tree */}
+      <path d="M115 163 C113 140 118 125 122 112" stroke="#8D6E63" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+      <path d="M122 112 C110 104 95 108 90 115" stroke="#2E7D32" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M122 112 C132 100 148 100 155 108" stroke="#388E3C" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M122 112 C114 100 100 98 92 104" stroke="#43A047" strokeWidth="2" strokeLinecap="round" fill="none" />
+      {/* Circular arrows (cycle symbol) */}
+      <path d="M85 70 A45 45 0 0 1 155 70" stroke="#2E7D32" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M155 70 A45 45 0 0 1 120 105" stroke="#388E3C" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M120 105 A45 45 0 0 1 85 70" stroke="#43A047" strokeWidth="3" strokeLinecap="round" fill="none" />
+      {/* Arrow heads */}
+      <path d="M152 62 L155 70 L147 70" fill="#2E7D32" />
+      <path d="M125 102 L120 105 L123 97" fill="#388E3C" />
+      <path d="M88 78 L85 70 L93 72" fill="#43A047" />
+      {/* Small icons inside cycle: leaf, drop, recycle */}
+      <circle cx="120" cy="72" r="6" fill="#E8F5E9" />
+      <path d="M120 69 C117 72 117 75 120 76 C123 75 123 72 120 69Z" fill="#2E7D32" />
+      {/* Sun */}
+      <circle cx="185" cy="45" r="18" fill="#FFD54F" opacity="0.7" />
+      <circle cx="185" cy="45" r="13" fill="#FFE082" />
+      {/* Birds */}
+      <path d="M50 50 Q55 45 60 50" stroke="#546E7A" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M40 60 Q44 56 48 60" stroke="#546E7A" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+      {/* Cloud */}
+      <ellipse cx="65" cy="40" rx="18" ry="6" fill="white" opacity="0.5" />
+    </svg>
+  );
+}
+
+export function ImpactIllustration({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-label="Impact illustration showing hands protecting nature">
+      <defs>
+        <linearGradient id="imp-bg" x1="120" y1="0" x2="120" y2="240" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#E8F5E9" />
+          <stop offset="1" stopColor="#C8E6C9" />
+        </linearGradient>
+      </defs>
+      {/* Background circle */}
+      <circle cx="120" cy="120" r="110" fill="url(#imp-bg)" />
+      {/* Hands (cupping shape) */}
+      <path d="M60 155 C60 140 75 120 90 125 C95 115 105 110 120 110 C135 110 145 115 150 125 C165 120 180 140 180 155 C180 170 155 185 120 185 C85 185 60 170 60 155Z" fill="#A5D6A7" opacity="0.5" />
+      <path d="M65 152 C65 140 78 124 92 128 C96 118 107 113 120 113 C133 113 144 118 148 128 C162 124 175 140 175 152 C175 168 152 180 120 180 C88 180 65 168 65 152Z" fill="#81C784" opacity="0.6" />
+      {/* Globe in hands */}
+      <circle cx="120" cy="130" r="32" fill="#4DB6AC" opacity="0.4" />
+      <circle cx="120" cy="130" r="28" fill="#4DB6AC" opacity="0.3" />
+      {/* Land masses on globe */}
+      <path d="M105 115 C110 112 118 118 115 125 C110 128 102 122 105 115Z" fill="#2E7D32" opacity="0.6" />
+      <path d="M128 120 C135 118 140 125 137 132 C132 135 125 130 128 120Z" fill="#2E7D32" opacity="0.6" />
+      <path d="M112 135 C118 132 125 138 120 143 C115 145 108 140 112 135Z" fill="#388E3C" opacity="0.5" />
+      {/* Large leaf growing from globe */}
+      <path d="M120 100 C110 85 115 65 130 55 C128 70 135 82 120 100Z" fill="#2E7D32" />
+      <path d="M120 100 C125 85 132 70 130 55" stroke="#1B5E20" strokeWidth="1" fill="none" />
+      {/* Small leaves */}
+      <path d="M130 55 C135 48 142 50 140 58 C136 60 130 58 130 55Z" fill="#43A047" opacity="0.7" />
+      {/* Connection dots (waste, water, wildlife) */}
+      <circle cx="70" cy="85" r="12" fill="white" opacity="0.8" />
+      <path d="M66 85 L70 80 L74 85 C74 90 66 90 66 85Z" fill="#4DB6AC" />
+      <circle cx="170" cy="85" r="12" fill="white" opacity="0.8" />
+      <path d="M165 82 C167 78 173 78 175 82 C177 86 170 92 170 92 C170 92 163 86 165 82Z" fill="#EF5350" opacity="0.6" />
+      <circle cx="120" cy="50" r="10" fill="white" opacity="0.8" />
+      <path d="M116 50 C116 46 120 43 120 43 C120 43 124 46 124 50 C124 53 120 55 120 55 C120 55 116 53 116 50Z" fill="#2E7D32" />
+      {/* Connecting lines */}
+      <path d="M82 85 L108 105" stroke="#A5D6A7" strokeWidth="1.5" strokeDasharray="3 3" />
+      <path d="M158 85 L132 105" stroke="#A5D6A7" strokeWidth="1.5" strokeDasharray="3 3" />
+      <path d="M120 60 L120 98" stroke="#A5D6A7" strokeWidth="1.5" strokeDasharray="3 3" />
+    </svg>
+  );
+}
+
 export function ZircuviaLogo({ className }: { className?: string }) {
   return (
     <img
