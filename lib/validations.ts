@@ -54,3 +54,21 @@ export const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   text: z.string().max(500).optional(),
 });
+
+export const surveyResponseItemSchema = z.object({
+  questionId: z.string().min(1),
+  questionText: z.string().min(1).max(200),
+  type: z.enum(["rating", "likert", "nps", "yes_no", "yes_no_partial", "multi_select", "text"]),
+  value: z.union([
+    z.number().int().min(0).max(10),
+    z.string().max(500),
+    z.array(z.string().max(100)).max(10),
+  ]),
+});
+
+export const surveyFeedbackSchema = z.object({
+  surveyType: z.enum(["micro", "session"]),
+  triggerPoint: z.string().min(1).max(50),
+  participantName: z.string().max(100).optional(),
+  responses: z.array(surveyResponseItemSchema).min(1).max(20),
+});
