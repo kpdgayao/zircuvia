@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { BusinessCard } from "@/components/business-card";
 import { OnboardingGuard } from "./onboarding-guard";
 import { DiscoverIllustration } from "@/components/illustrations";
+import { prisma } from "@/lib/prisma";
 import {
   Leaf,
   MapPin,
@@ -17,28 +18,41 @@ import {
   Paintbrush,
   Plane,
 } from "lucide-react";
+import type { Prisma } from "@prisma/client";
 
-interface BusinessSummary {
-  id: string;
-  name: string;
-  category: string;
-  about: string | null;
-  address: string;
-  isEcoCertified: boolean;
-  coverPhotoUrl: string | null;
-  avgRating: number;
-  reviewCount: number;
-}
-
-async function fetchBusinesses(params: string): Promise<BusinessSummary[]> {
+async function fetchBusinesses(options: { limit?: number; ecoOnly?: boolean } = {}) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/businesses?${params}`, {
-      next: { revalidate: 60 },
+    const { limit = 6, ecoOnly = false } = options;
+
+    const where: Prisma.BusinessWhereInput = {
+      isArchived: false,
+    };
+
+    if (ecoOnly) {
+      where.isEcoCertified = true;
+    }
+
+    const businesses = await prisma.business.findMany({
+      where,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: { select: { reviews: true } },
+        reviews: {
+          select: { rating: true },
+        },
+      },
     });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.businesses ?? [];
+
+    return businesses.map((b) => {
+      const { reviews, _count, ...rest } = b;
+      const reviewCount = _count.reviews;
+      const avgRating =
+        reviewCount > 0
+          ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+          : 0;
+      return { ...rest, avgRating, reviewCount };
+    });
   } catch {
     return [];
   }
@@ -57,8 +71,8 @@ export default async function HomePage() {
   const session = await getSession();
 
   const [topBusinesses, ecoBusinesses] = await Promise.all([
-    fetchBusinesses("limit=6"),
-    fetchBusinesses("ecoOnly=true&limit=6"),
+    fetchBusinesses({ limit: 6 }),
+    fetchBusinesses({ limit: 6, ecoOnly: true }),
   ]);
 
   return (
