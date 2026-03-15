@@ -18,6 +18,16 @@ interface MapViewProps {
   className?: string;
 }
 
+const ICON_OPTIONS = {
+  iconUrl: "/icons/marker-icon.png",
+  iconRetinaUrl: "/icons/marker-icon-2x.png",
+  shadowUrl: "/icons/marker-shadow.png",
+  iconSize: [25, 41] as [number, number],
+  iconAnchor: [12, 41] as [number, number],
+  popupAnchor: [1, -34] as [number, number],
+  shadowSize: [41, 41] as [number, number],
+};
+
 export function MapView({
   markers,
   center = [9.7489, 118.7354],
@@ -27,36 +37,21 @@ export function MapView({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const leafletRef = useRef<typeof L | null>(null);
+  const iconsRef = useRef<{ default: L.Icon; eco: L.Icon } | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const cancelledRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
 
   const updateMarkers = useCallback(
-    (map: L.Map, leaflet: typeof L, markerData: MapMarker[]) => {
+    (map: L.Map, icons: { default: L.Icon; eco: L.Icon }, markerData: MapMarker[]) => {
       // Clear existing markers
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
 
-      const iconOptions = {
-        iconUrl: "/icons/marker-icon.png",
-        iconRetinaUrl: "/icons/marker-icon-2x.png",
-        shadowUrl: "/icons/marker-shadow.png",
-        iconSize: [25, 41] as [number, number],
-        iconAnchor: [12, 41] as [number, number],
-        popupAnchor: [1, -34] as [number, number],
-        shadowSize: [41, 41] as [number, number],
-      };
-
-      const defaultIcon = new leaflet.Icon(iconOptions);
-      const ecoIcon = new leaflet.Icon({
-        ...iconOptions,
-        className: "eco-marker",
-      });
-
       markerData.forEach((m) => {
-        const marker = leaflet
+        const marker = leafletRef.current!
           .marker([m.lat, m.lng], {
-            icon: m.isEcoCertified ? ecoIcon : defaultIcon,
+            icon: m.isEcoCertified ? icons.eco : icons.default,
           })
           .addTo(map);
 
@@ -89,11 +84,13 @@ export function MapView({
 
       // Fix default icon paths
       delete (Leaflet.Icon.Default.prototype as any)._getIconUrl;
-      Leaflet.Icon.Default.mergeOptions({
-        iconRetinaUrl: "/icons/marker-icon-2x.png",
-        iconUrl: "/icons/marker-icon.png",
-        shadowUrl: "/icons/marker-shadow.png",
-      });
+      Leaflet.Icon.Default.mergeOptions(ICON_OPTIONS);
+
+      // Create icon instances once
+      iconsRef.current = {
+        default: new Leaflet.Icon(ICON_OPTIONS),
+        eco: new Leaflet.Icon({ ...ICON_OPTIONS, className: "eco-marker" }),
+      };
 
       const map = Leaflet.map(containerRef.current).setView(center, zoom);
       mapRef.current = map;
@@ -120,6 +117,7 @@ export function MapView({
         mapRef.current = null;
       }
       leafletRef.current = null;
+      iconsRef.current = null;
       markersRef.current = [];
       setMapReady(false);
     };
@@ -127,8 +125,8 @@ export function MapView({
 
   // Update markers when map is ready or marker data changes
   useEffect(() => {
-    if (!mapReady || !mapRef.current || !leafletRef.current || cancelledRef.current) return;
-    updateMarkers(mapRef.current, leafletRef.current, markers);
+    if (!mapReady || !mapRef.current || !iconsRef.current || cancelledRef.current) return;
+    updateMarkers(mapRef.current, iconsRef.current, markers);
   }, [markers, mapReady, updateMarkers]);
 
   return (
