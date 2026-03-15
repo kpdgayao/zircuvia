@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import {
   LayoutDashboard, Building2, Leaf, Receipt, Users, Calendar,
-  ScrollText, Settings, MessageSquare,
+  ScrollText, Settings, MessageSquare, FileText,
 } from "lucide-react";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SurveyProvider } from "@/components/survey/SurveyProvider";
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/admin/businesses", label: "Businesses", icon: Building2, permission: "businessManagement" },
   { href: "/admin/eco-business", label: "Eco Business", icon: Leaf, permission: "ecoBusinessProcessing" },
   { href: "/admin/fees", label: "Envi Fees", icon: Receipt, permission: "environmentalFees" },
+  { href: "/admin/treasury-report", label: "Treasury Report", icon: FileText, permission: "environmentalFees" },
   { href: "/admin/visits", label: "Visits", icon: Users, permission: "visitorStats" },
   { href: "/admin/events", label: "Events & Promos", icon: Calendar, permission: "eventsAndPromos" },
   { href: "/admin/logs", label: "System Logs", icon: ScrollText, permission: "systemLogs" },
@@ -35,7 +36,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <SurveyProvider role="ADMIN" variant="dialog">
       <div className="min-h-screen flex bg-gray-50">
-        <aside className="w-64 bg-white border-r p-4 flex flex-col fixed h-full">
+        <aside className="w-64 bg-white border-r p-4 flex flex-col fixed h-full print:hidden">
           <div className="font-bold text-lg text-[#2E7D32] mb-1">ZircuVia</div>
           <div className="text-xs text-gray-500 mb-6">Content Management System</div>
           <nav className="flex-1 space-y-1">
@@ -55,7 +56,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <SignOutButton redirectTo="/admin-login" />
           </div>
         </aside>
-        <main className="flex-1 ml-64 p-8">{children}</main>
+        <main className="flex-1 ml-64 p-8 print:ml-0 print:p-0">{children}</main>
       </div>
     </SurveyProvider>
   );
