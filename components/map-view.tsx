@@ -27,6 +27,7 @@ export function MapView({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const cancelledRef = useRef(false);
 
   const updateMarkers = useCallback(
     (map: L.Map, leaflet: typeof L, markerData: MapMarker[]) => {
@@ -72,18 +73,19 @@ export function MapView({
 
   // Initialize map
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    let map: L.Map | null = null;
+    let cancelled = false;
 
     (async () => {
       const leaflet = await import("leaflet");
-      const L = leaflet.default ?? leaflet;
+      const Leaflet = leaflet.default ?? leaflet;
       await import("leaflet/dist/leaflet.css");
 
+      // Bail out if component unmounted during async import
+      if (cancelled || !containerRef.current) return;
+
       // Fix default icon paths
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
+      delete (Leaflet.Icon.Default.prototype as any)._getIconUrl;
+      Leaflet.Icon.Default.mergeOptions({
         iconRetinaUrl:
           "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
         iconUrl:
@@ -92,37 +94,44 @@ export function MapView({
           "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
       });
 
-      // Guard: container may have unmounted during async import
-      if (!containerRef.current) return;
-
-      map = L.map(containerRef.current).setView(center, zoom);
+      const map = Leaflet.map(containerRef.current).setView(center, zoom);
       mapRef.current = map;
+      cancelledRef.current = false;
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      Leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
 
-      updateMarkers(map, L, markers);
+      updateMarkers(map, Leaflet, markers);
     })();
 
     return () => {
-      if (map) {
-        map.remove();
-        map = null;
+      cancelled = true;
+      cancelledRef.current = true;
+      if (mapRef.current) {
+        try {
+          mapRef.current.remove();
+        } catch {
+          // Ignore errors if DOM is already detached
+        }
         mapRef.current = null;
       }
+      markersRef.current = [];
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update markers when data changes
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || cancelledRef.current) return;
+
+    const currentMap = mapRef.current;
 
     (async () => {
       const leaflet = await import("leaflet");
-      const L = leaflet.default ?? leaflet;
-      if (mapRef.current) {
-        updateMarkers(mapRef.current, L, markers);
+      const Leaflet = leaflet.default ?? leaflet;
+      // Check map still exists after async import
+      if (mapRef.current === currentMap && !cancelledRef.current) {
+        updateMarkers(currentMap, Leaflet, markers);
       }
     })();
   }, [markers, updateMarkers]);
