@@ -5,6 +5,8 @@ import { ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  CircularEconomyIllustration,
+  ImpactIllustration,
   DiscoverIllustration,
   PaymentIllustration,
   SaveIllustration,
@@ -19,25 +21,39 @@ interface Slide {
 
 const SLIDES: Slide[] = [
   {
+    illustration: <CircularEconomyIllustration className="w-56 h-56" />,
+    title: "Travel the Puerto Princesa Way",
+    description:
+      "Puerto Princesa is building a zero-waste future. Every visit you make helps protect Palawan's ecosystems for generations.",
+    bg: "from-lime-50 to-white",
+  },
+  {
+    illustration: <ImpactIllustration className="w-56 h-56" />,
+    title: "Your Visit Creates Impact",
+    description:
+      "Your environmental fee funds conservation, waste management, and community programs. Choosing eco-certified businesses keeps the cycle going.",
+    bg: "from-green-50 to-white",
+  },
+  {
     illustration: <DiscoverIllustration className="w-56 h-56" />,
     title: "Discover Puerto Princesa",
     description:
       "Explore the best eco-certified hotels, restaurants, tours, and local artisans that Puerto Princesa City has to offer.",
-    bg: "from-green-50 to-white",
+    bg: "from-emerald-50 to-white",
   },
   {
     illustration: <PaymentIllustration className="w-56 h-56" />,
     title: "Pay Environmental Fees Easily",
     description:
       "Pay your environmental fee online in seconds. Your contribution helps preserve the natural beauty of Palawan.",
-    bg: "from-emerald-50 to-white",
+    bg: "from-teal-50 to-white",
   },
   {
     illustration: <SaveIllustration className="w-56 h-56" />,
     title: "Save Your Favorite Places",
     description:
       "Bookmark the spots you love so you can find them again quickly. Build your own travel itinerary.",
-    bg: "from-teal-50 to-white",
+    bg: "from-cyan-50 to-white",
   },
 ];
 
