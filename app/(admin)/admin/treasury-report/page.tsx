@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { subDays } from "date-fns";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { FEE_PRICES, PAYER_TYPE_LABELS } from "@/lib/fee-constants";
+import { FEE_PRICES, FEE_VALIDITY_DAYS, PAYER_TYPE_LABELS } from "@/lib/fee-constants";
 import { Printer } from "lucide-react";
 
 interface TreasuryReport {
@@ -51,6 +51,7 @@ export default function TreasuryReportPage() {
     to: new Date(),
   });
   const [report, setReport] = useState<TreasuryReport | null>(null);
+  const [generatedAt, setGeneratedAt] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchReport = useCallback(async () => {
@@ -62,6 +63,12 @@ export default function TreasuryReportPage() {
       const res = await fetch(`/api/reports/treasury?${params.toString()}`);
       if (res.ok) {
         setReport(await res.json());
+        setGeneratedAt(
+          new Date().toLocaleString("en-PH", {
+            dateStyle: "long",
+            timeStyle: "short",
+          })
+        );
       }
     } catch {
       // ignore
@@ -74,11 +81,10 @@ export default function TreasuryReportPage() {
     fetchReport();
   }, [fetchReport]);
 
-  const dateLabel = `${formatDate(dateRange.from)} — ${formatDate(dateRange.to)}`;
-  const generatedAt = new Date().toLocaleString("en-PH", {
-    dateStyle: "long",
-    timeStyle: "short",
-  });
+  const dateLabel = useMemo(
+    () => `${formatDate(dateRange.from)} — ${formatDate(dateRange.to)}`,
+    [dateRange]
+  );
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -290,7 +296,7 @@ export default function TreasuryReportPage() {
               </tbody>
             </table>
             <p className="text-xs text-gray-500 mt-2 italic">
-              Validity: 10 days from date of payment. Non-transferable.
+              Validity: {FEE_VALIDITY_DAYS} days from date of payment. Non-transferable.
             </p>
           </section>
 
