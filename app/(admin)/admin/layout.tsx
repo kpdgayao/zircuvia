@@ -55,6 +55,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <div className="text-sm font-medium text-gray-700 mb-2">{session.firstName}</div>
             <SignOutButton redirectTo="/admin-login" />
           </div>
+          <p className="mt-3 text-[10px] text-gray-400">
+            Developed by{" "}
+            <a href="https://www.iol.ph" target="_blank" rel="noopener noreferrer" className="hover:text-gray-500 underline">
+              IOL Inc.
+            </a>
+          </p>
         </aside>
         <main className="flex-1 ml-64 p-8 print:ml-0 print:p-0">{children}</main>
       </div>
