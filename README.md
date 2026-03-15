@@ -1,77 +1,61 @@
-# Zircuvia
+# ZircuVia
 
-Tourism and environmental fee management platform for Puerto Princesa City, Palawan. Built with Next.js, Prisma, and Tailwind CSS.
-
-## Features
-
-- **Environmental Fee Payments** — tourists can pay and track environmental fees with support for multiple payer types (Regular Tourist, Palaweno, Student, Senior Citizen, PWD)
-- **Simulated Payment Gateway** — demo-ready checkout flow with payment method selection (Credit/Debit Card, GCash, Maya), card form, processing animation, and receipt generation
-- **Visitor Check-in** — verifier role can scan and validate fee payments at checkpoints
-- **Admin Dashboard** — manage businesses, eco-business processing, environmental fees, visitor stats, events, system logs, and settings
-- **Business Directory** — browse and review local tourism businesses (hotels, resorts, restaurants, artisans, travel & tours)
-- **Tourism Circuits** — curated tourism routes across Puerto Princesa
-- **Interactive Maps** — Leaflet-based maps for tourism locations
+Smart Circular Tourism Platform for Puerto Princesa City. A progressive web app (PWA) that helps tourists discover eco-certified businesses, pay environmental fees, and explore sustainable tourism in Palawan.
 
 ## Tech Stack
 
-- **Framework:** Next.js 15 (App Router, Turbopack)
-- **Database:** PostgreSQL + Prisma ORM
-- **Styling:** Tailwind CSS 4 + shadcn/ui
-- **Auth:** JWT (jose) + bcryptjs
-- **Payments:** Xendit SDK (with mock mode for demos)
-- **Maps:** Leaflet + react-leaflet
+- **Framework:** Next.js 15 (App Router, React 19, TypeScript)
+- **Styling:** Tailwind CSS 4 with shadcn/ui (base-nova style)
+- **Database:** PostgreSQL with Prisma ORM
+- **Authentication:** JWT (jose) with httpOnly cookies
+- **Maps:** React Leaflet with OpenStreetMap
+- **Payments:** Xendit payment gateway (with mock mode)
 - **Charts:** Recharts
+- **Deployment:** Docker on Railway
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- pnpm 10+
+- Node.js 22+
+- pnpm 10.28+
 - PostgreSQL database
 
 ### Setup
 
-1. Clone the repository and install dependencies:
-
 ```bash
+# Install dependencies
 pnpm install
-```
 
-2. Copy the environment template and configure:
-
-```bash
+# Copy environment variables
 cp .env.example .env
-```
+# Edit .env with your database URL and JWT secret
 
-Edit `.env` with your database URL and a JWT secret:
-
-```
-DATABASE_URL="postgresql://user:password@host:5432/zircuvia"
-JWT_SECRET="your-secret-here"
-XENDIT_MODE="mock"
-```
-
-3. Generate Prisma client and push the schema:
-
-```bash
+# Generate Prisma client
 pnpm db:generate
+
+# Push database schema
 pnpm db:push
-```
 
-4. Seed the database with demo data:
-
-```bash
+# Seed the database (optional)
 pnpm db:seed
-```
 
-5. Start the development server:
-
-```bash
+# Start development server
 pnpm dev
 ```
 
-The app will be available at `http://localhost:3000`.
+The app runs at `http://localhost:3000`.
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `JWT_SECRET` | Yes | Secret for signing JWT tokens |
+| `NEXT_PUBLIC_APP_URL` | Yes | Public URL of the application |
+| `XENDIT_MODE` | No | `mock` for testing, `live` for production |
+| `XENDIT_SECRET_KEY` | No | Xendit API key (not needed in mock mode) |
+| `XENDIT_WEBHOOK_TOKEN` | No | Xendit webhook verification token |
 
 ## Demo Accounts
 
@@ -101,42 +85,82 @@ The app includes a simulated payment gateway (when `XENDIT_MODE="mock"`):
 
 No real charges are made in mock mode.
 
-## Scripts
-
-| Command           | Description                        |
-| ----------------- | ---------------------------------- |
-| `pnpm dev`        | Start dev server with Turbopack    |
-| `pnpm build`      | Production build                   |
-| `pnpm start`      | Start production server            |
-| `pnpm lint`       | Run ESLint                         |
-| `pnpm db:generate`| Generate Prisma client             |
-| `pnpm db:push`    | Push schema to database            |
-| `pnpm db:migrate` | Run database migrations            |
-| `pnpm db:studio`  | Open Prisma Studio                 |
-| `pnpm db:seed`    | Seed database with demo data       |
-
-## Environment Variables
-
-| Variable              | Required | Description                                      |
-| --------------------- | -------- | ------------------------------------------------ |
-| `DATABASE_URL`        | Yes      | PostgreSQL connection string                     |
-| `JWT_SECRET`          | Yes      | Secret for JWT token signing                     |
-| `NEXT_PUBLIC_APP_URL` | Yes      | Public URL of the app                            |
-| `XENDIT_MODE`         | No       | Set to `"mock"` for demo mode (default: `"mock"`) |
-| `XENDIT_SECRET_KEY`   | No       | Xendit API secret key (production only)          |
-| `XENDIT_WEBHOOK_TOKEN`| No       | Xendit webhook verification token                |
-
 ## Project Structure
 
 ```
 app/
-├── (auth)/           # Login pages (tourist, admin)
-├── (tourist)/        # Tourist-facing pages (fees, profile)
-├── (admin)/          # Admin dashboard pages
-├── (standalone)/     # Standalone pages (checkout)
-├── (public)/         # Public pages (businesses, circuits, map)
-├── api/              # API routes
-components/           # Shared UI components
-lib/                  # Utilities, auth, prisma, xendit, constants
-prisma/               # Schema and seed file
+  (tourist)/       # Public tourist routes (home, listings, map, saved)
+  (auth)/          # Authentication pages (login, register)
+  (admin)/         # Admin dashboard (protected)
+  (checker)/       # Verifier check-in app (protected)
+  (standalone)/    # Standalone pages (payment checkout, onboarding)
+  api/             # API route handlers
+components/
+  ui/              # shadcn/ui components
+lib/               # Utilities, auth, Prisma client, constants
+prisma/            # Schema and seed script
+public/            # Static assets, PWA manifest, service worker
 ```
+
+## Key Features
+
+- **Tourist App:** Browse eco-certified hotels, restaurants, tours, and artisans. Save favorites, view on map, leave reviews.
+- **Environmental Fee:** Online payment flow for eco-tourism fees with QR-based verification.
+- **Simulated Payment Gateway:** Demo-ready checkout with payment method selection (Card, GCash, Maya), processing animation, and receipt generation.
+- **Admin Dashboard:** Manage businesses, eco-certifications, fee payments, visitor stats, and system logs.
+- **Verifier App:** Check-in tourists at locations by scanning fee payment references.
+- **PWA:** Installable with offline support for map tiles and business data.
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start dev server with Turbopack |
+| `pnpm build` | Production build |
+| `pnpm start` | Start production server |
+| `pnpm lint` | Run ESLint |
+| `pnpm db:generate` | Generate Prisma client |
+| `pnpm db:push` | Push schema to database |
+| `pnpm db:migrate` | Run Prisma migrations |
+| `pnpm db:studio` | Open Prisma Studio |
+| `pnpm db:seed` | Seed the database |
+
+## User Roles
+
+| Role | Access |
+|------|--------|
+| **Tourist** | Browse, save, pay fees, submit reviews |
+| **Admin** | Full system management with granular permissions |
+| **Verifier** | Check-in verification at assigned locations |
+
+## Deployment
+
+The app deploys via Docker on Railway.
+
+```bash
+# Build Docker image
+docker build -t zircuvia .
+
+# Run container
+docker run -p 3000:3000 --env-file .env zircuvia
+```
+
+### Important: Standalone Output
+
+The app uses `output: "standalone"` in `next.config.ts`. When deploying without Docker, you must manually copy static assets:
+
+```bash
+pnpm build
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public
+node .next/standalone/server.js
+```
+
+The Dockerfile handles this automatically (see lines 26-28).
+
+## Architecture Notes
+
+- **Tailwind CSS 4** uses `@tailwindcss/postcss` via `postcss.config.mjs` — this file is required for styles to compile
+- **Font:** Geist font is bundled locally (`public/fonts/`) to avoid build failures from Google Fonts network issues
+- **Auth:** JWT tokens stored in `zircuvia_session` httpOnly cookie, 7-day expiry
+- **PWA:** Service worker caches OpenStreetMap tiles (up to 500) and business API responses

@@ -27,9 +27,11 @@ export default function MapPage() {
   const [markers, setMarkers] = useState<MapMarker[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchBusinesses = useCallback(async () => {
     try {
+      setError(null);
       const params = new URLSearchParams({ limit: "100" });
       if (search) params.set("search", search);
       const res = await fetch(`/api/businesses?${params.toString()}`);
@@ -45,9 +47,12 @@ export default function MapPage() {
             isEcoCertified: b.isEcoCertified,
           }));
         setMarkers(withCoords);
+      } else {
+        setError("Failed to load businesses");
       }
     } catch (err) {
       console.error("Failed to load businesses for map:", err);
+      setError("Failed to load businesses");
     } finally {
       setLoading(false);
     }
@@ -77,7 +82,14 @@ export default function MapPage() {
           <p className="text-sm text-gray-500">Loading map...</p>
         </div>
       ) : (
-        <MapView markers={markers} className="h-full w-full" />
+        <>
+          {error && (
+            <div className="absolute bottom-4 left-3 right-3 z-[1000] bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+          <MapView markers={markers} className="h-full w-full" />
+        </>
       )}
     </div>
   );
