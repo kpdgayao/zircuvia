@@ -3,6 +3,7 @@ import "./globals.css";
 import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
 import { PWARegister } from "@/components/pwa-register";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 const geist = localFont({
   src: "../public/fonts/geist-latin.woff2",
@@ -16,12 +17,24 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
-    apple: "/icons/icon-192.png",
+    apple: [{ url: "/icons/icon-192.png", sizes: "192x192" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ZircuVia",
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
 
 export const viewport: Viewport = {
   themeColor: "#2E7D32",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -34,10 +47,15 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2E7D32" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="ZircuVia" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body>
         {children}
         <PWARegister />
+        <PWAInstallPrompt />
       </body>
     </html>
   );

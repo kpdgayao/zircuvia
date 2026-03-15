@@ -8,6 +8,7 @@ import {
   CalendarDays,
   CreditCard,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -15,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
+import { useSurveyContext } from "@/components/survey/SurveyProvider";
 
 interface UserProfile {
   id: string;
@@ -27,6 +29,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { sessionSurveyReady, openSessionSurvey } = useSurveyContext();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -128,6 +131,25 @@ export default function ProfilePage() {
           </Link>
         </CardContent>
       </Card>
+
+      {/* Give Feedback */}
+      {sessionSurveyReady && (
+        <Card className="border-[#2E7D32]/30 bg-green-50/50">
+          <CardContent className="p-0">
+            <button onClick={openSessionSurvey}
+              className="flex items-center justify-between px-4 py-3 hover:bg-green-50 transition w-full text-left">
+              <div className="flex items-center gap-3">
+                <MessageSquare className="w-4 h-4 text-[#2E7D32]" />
+                <div>
+                  <span className="text-sm font-medium text-[#2E7D32]">Give Feedback</span>
+                  <p className="text-xs text-gray-500">Help us improve ZircuVia</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#2E7D32]" />
+            </button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Sign out */}
       <SignOutButton

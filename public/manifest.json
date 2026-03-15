@@ -1,13 +1,34 @@
 {
+  "id": "/",
   "name": "ZircuVia",
   "short_name": "ZircuVia",
-  "description": "Smart Circular Tourism Platform",
+  "description": "Smart Circular Tourism Platform for Puerto Princesa City",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#2E7D32",
+  "categories": ["travel", "navigation", "lifestyle"],
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-home.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ZircuVia home screen showing tourism listings"
+    },
+    {
+      "src": "/screenshots/mobile-map.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Interactive map of Puerto Princesa eco-tourism spots"
+    }
   ]
 }
