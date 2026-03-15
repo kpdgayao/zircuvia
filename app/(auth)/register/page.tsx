@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -54,8 +54,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const rules = checkPassword(password);
-  const allRulesPass = Object.values(rules).every(Boolean);
+  const rules = useMemo(() => checkPassword(password), [password]);
+  const allRulesPass = useMemo(() => Object.values(rules).every(Boolean), [rules]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

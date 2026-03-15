@@ -7,11 +7,10 @@ import {
   Mail,
   CalendarDays,
   CreditCard,
-  LogOut,
   ChevronRight,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { SignOutButton } from "@/components/sign-out-button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
@@ -30,8 +29,6 @@ export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [signingOut, setSigningOut] = useState(false);
-
   useEffect(() => {
     async function fetchProfile() {
       try {
@@ -55,18 +52,6 @@ export default function ProfilePage() {
     }
     fetchProfile();
   }, [router]);
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      router.replace("/");
-      router.refresh();
-    } catch (err) {
-      console.error("Sign out error:", err);
-      setSigningOut(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -145,15 +130,10 @@ export default function ProfilePage() {
       </Card>
 
       {/* Sign out */}
-      <Button
-        variant="outline"
-        className="w-full text-red-600 border-red-200 hover:bg-red-50"
-        onClick={handleSignOut}
-        disabled={signingOut}
-      >
-        <LogOut className="w-4 h-4 mr-2" />
-        {signingOut ? "Signing out..." : "Sign Out"}
-      </Button>
+      <SignOutButton
+        redirectTo="/"
+        className="w-full justify-center py-2 border border-red-200 rounded-lg text-red-600 hover:bg-red-50 hover:text-red-600"
+      />
     </div>
   );
 }

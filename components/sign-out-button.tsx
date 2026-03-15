@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function SignOutButton({ redirectTo = "/" }: { redirectTo?: string }) {
+export function SignOutButton({ redirectTo = "/", className }: { redirectTo?: string; className?: string }) {
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
 
@@ -23,7 +24,7 @@ export function SignOutButton({ redirectTo = "/" }: { redirectTo?: string }) {
     <button
       onClick={handleSignOut}
       disabled={signingOut}
-      className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 transition disabled:opacity-50"
+      className={cn("flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 transition disabled:opacity-50", className)}
     >
       <LogOut className="w-4 h-4" />
       {signingOut ? "Signing out..." : "Sign Out"}

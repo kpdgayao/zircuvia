@@ -9,6 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ZircuviaLogo } from "@/components/illustrations";
+const DEMO_ACCOUNTS = [
+  { email: "tourist@demo.zircuvia.ph", label: "Tourist", Icon: MapPin },
+  { email: "admin@demo.zircuvia.ph", label: "Admin", Icon: Shield },
+  { email: "verifier@demo.zircuvia.ph", label: "Verifier", Icon: BadgeCheck },
+] as const;
+const DEMO_PASSWORD = "Demo2026!";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,14 +23,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function performLogin(loginEmail: string, loginPassword: string) {
     setLoading(true);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -39,27 +44,15 @@ export default function LoginPage() {
     }
   }
 
-  async function handleDemoLogin(demoEmail: string, demoPassword: string) {
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    performLogin(email, password);
+  }
+
+  function handleDemoLogin(demoEmail: string) {
     setEmail(demoEmail);
-    setPassword(demoPassword);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: demoEmail, password: demoPassword }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.message ?? "Login failed");
-        return;
-      }
-      router.push(data.redirectTo ?? "/");
-    } catch {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    setPassword(DEMO_PASSWORD);
+    performLogin(demoEmail, DEMO_PASSWORD);
   }
 
   return (
@@ -133,33 +126,18 @@ export default function LoginPage() {
         <div className="mt-4 border-t pt-4">
           <p className="text-xs text-muted-foreground text-center mb-2">Quick demo access</p>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => handleDemoLogin("tourist@demo.zircuvia.ph", "Demo2026!")}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-md text-xs font-medium hover:bg-green-100 transition-colors disabled:opacity-50"
-            >
-              <MapPin className="size-3.5" aria-hidden="true" />
-              Tourist
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDemoLogin("admin@demo.zircuvia.ph", "Demo2026!")}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-md text-xs font-medium hover:bg-green-100 transition-colors disabled:opacity-50"
-            >
-              <Shield className="size-3.5" aria-hidden="true" />
-              Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDemoLogin("verifier@demo.zircuvia.ph", "Demo2026!")}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-md text-xs font-medium hover:bg-green-100 transition-colors disabled:opacity-50"
-            >
-              <BadgeCheck className="size-3.5" aria-hidden="true" />
-              Verifier
-            </button>
+            {DEMO_ACCOUNTS.map(({ email: demoEmail, label, Icon }) => (
+              <button
+                key={demoEmail}
+                type="button"
+                onClick={() => handleDemoLogin(demoEmail)}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-md text-xs font-medium hover:bg-green-100 transition-colors disabled:opacity-50"
+              >
+                <Icon className="size-3.5" aria-hidden="true" />
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
